@@ -8,8 +8,7 @@ from dataclasses import dataclass, field, replace
 import chess
 import numpy as np
 
-import os 
-
+from pathlib import Path
 
 from .config import TrackerConfig
 from .simulate import SimConfig, SimTruth, simulate_game
@@ -185,7 +184,10 @@ def to_markdown(results: dict[str, dict]) -> str:
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
     return "\n".join(lines)
 
+
 def dump(results: dict[str, dict], path: str) -> None:
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path, "w") as fh:
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with output_path.open("w", encoding="utf-8") as fh:
         json.dump(results, fh, indent=2)
