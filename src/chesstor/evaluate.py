@@ -4,11 +4,10 @@ from __future__ import annotations
 import json
 import random
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 import chess
 import numpy as np
-
-from pathlib import Path
 
 from .config import TrackerConfig
 from .simulate import SimConfig, SimTruth, simulate_game
