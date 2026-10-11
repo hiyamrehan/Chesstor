@@ -183,6 +183,9 @@ def to_markdown(results: dict[str, dict]) -> str:
     return "\n".join(lines)
 
 
+import os 
+
 def dump(results: dict[str, dict], path: str) -> None:
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w") as fh:
         json.dump(results, fh, indent=2)
