@@ -1,0 +1,24 @@
+\chapter{Remaining FYP Plan}
+\section{Remaining Scope}
+Everything promised in the proposal that is not yet built (Chapter~8), plus real-data evaluation.
+\section{Remaining Modules and Features}
+Learned piece recogniser (13 classes) and automatic board detection/tracking; Flutter live-tracking interface and
+overlay; engine integration in the app; tutor feedback and explanation; PGN and video upload; analytics; data layer.
+\section{Remaining Iterations}
+Iteration 2: real data, recogniser, live app. Iteration 3: robustness, deployment, evaluation, acceptance.
+\section{Implementation Plan}
+Port the tracker interface to the app (Python service on a laptop first, then on-device conversion). Replace the
+classical observer by a learned model chosen empirically (classifier vs.\ detector vs.\ hybrid).
+\section{Testing and Validation Plan}\label{sec:valplan}
+Collect datasets D1--D4 (controlled board, held-out boards, full live games with ground-truth timestamps,
+disturbance sequences) across boards and materials (wood, plastic, glass), camera angles (top-down to 45$^\circ$),
+lighting, occlusions and camera shake; split by board and session; freeze parameters before the held-out run;
+repeat B1--B4 on real data; add phone profiling and an acceptance study.
+\section{Deployment Plan}
+Stage A laptop/webcam; B phone streaming to local processing; C model conversion; D on-device benchmark;
+E end-to-end on phone. If on-device inference is not feasible, we will state honestly that a local server is required.
+\section{Tentative Timeline}
+\todo{Gantt chart for the FYP-2 semester with the milestones above.}
+\section{Expected Final Deliverables}
+Working phone application, versioned code and CI/CD, real-board dataset and protocol, frozen-config evaluation
+with ablations and failure analysis, acceptance results, final report and demo.

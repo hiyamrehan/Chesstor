@@ -1,0 +1,59 @@
+\chapter{Iteration 1: Design and Implementation}
+\section{Iteration Objectives}
+Implement and verify the core module: turn a stream of per-square observations into a trusted game state, with
+uncertainty handling and recovery, behind a CI/CD pipeline, and measure it against baselines.
+
+\section{Selected Use Cases / Features}
+UC-03 to UC-14 (Chapter~4), the vision front-end (FR-1.1--1.4), the Stockfish wrapper, the evaluation harness, and CI/CD.
+
+\section{Design}
+See Chapter~5. The package \texttt{chesstor} contains: \texttt{observation.py} (frame type, temporal aggregate),
+\texttt{candidates.py} (hypotheses and scoring), \texttt{tracker.py} (state machine and policy), \texttt{vision/}
+(geometry, occupancy, synthetic renderer), \texttt{simulate.py} and \texttt{evaluate.py} (harness), \texttt{engine.py}.
+
+\section{Implementation}
+Python 3.10+, \texttt{python-chess}, NumPy, OpenCV. All thresholds are in one \texttt{TrackerConfig}, loadable from YAML,
+so experiments can archive and freeze them. The code is in a GitHub repository with a protected \texttt{main}, a
+\texttt{develop} branch and short-lived \texttt{feature/*} branches.
+
+\section{Completed Features / Module}
+State machine with allowed-transition table; temporal buffer and stability test; hypothesis generation up to
+two plies (cached by FEN); scoring and confirmation; strict-then-relaxed evidence gates; manual correction;
+board-lost/recovered transitions; homography, rectification, square extraction and corner-drift measure;
+calibration-based occupancy/colour classifier; engine wrapper; simulator; B1--B4 ablation; CLI; CI/CD.
+
+\section{Technical Implementation Details}
+\textbf{Observation.} Each frame carries a $64\times3$ probability matrix (empty/white/black), a per-square
+visibility mask and a quality score. \textbf{Aggregation.} Over a window of the last $N=8$ frames we average the
+log-probability per square, counting only frames where the square is visible; squares visible in fewer than half of
+the frames contribute nothing. \textbf{Stability.} The window is stable if it spans at least 0.4\,s and the
+argmax labels of its first and second halves differ in at most one visible square. \textbf{Hypotheses.} The null
+hypothesis (no move) plus every distinct legal one- and two-ply sequence from the trusted position; each
+hypothesis carries the predicted $64$ labels obtained by actually pushing the moves, so castling, en passant and
+captures need no special code. Hypotheses with identical labels (the four promotions) collapse to the queen.
+\textbf{Score.} $\mathrm{score}(h)=\sum_{s\in\text{visible}}\overline{\log p}_s(\ell^h_s)$, i.e.\ the mean-log-likelihood
+of the predicted labels.
+
+\section{Algorithms and Technical Decisions}
+\textbf{Confirmation rule.} Let $m$ be the gap between the best and runner-up hypotheses and $u$ the number of
+visible squares where the best hypothesis' label is worse than the observed best label by more than 1.5 nats
+(``unexplained''). Commit if $m\geq m_0+\lambda u$ with $m_0=2.5$, $\lambda=1.0$ and $u\le g$. Gates are tried in
+order: ($g=1$, one ply), ($g=1$, two plies), then ($g=5$, one ply), ($g=5$, two plies). The strict gates prefer a
+hypothesis that explains everything (including a missed move); the relaxed gates tolerate persistent per-square
+errors but demand more margin. If the best hypothesis is the null hypothesis the change is a transient and the
+state returns to TRACKING. Otherwise the system is UNCERTAIN, re-evaluated every frame, and after 8\,s requests
+manual correction. \textbf{Tuning.} $g$ and $\lambda$ were tuned on development seeds 110--113 only and then frozen;
+all results in Chapter~7 use fresh seeds 200--207. \textbf{Baselines} are the same code with switches:
+B1 no temporal window, no rules, no mask; B2 temporal+mask, naive source/destination diff; B3 rules only; B4 all.
+
+\section{Tools, Frameworks and Technologies}
+Python, python-chess, NumPy, OpenCV, PyYAML, pytest, pytest-cov, ruff, GitHub Actions, Stockfish (via UCI),
+LaTeX. Planned: Flutter, PyTorch (training), ONNX/TFLite (mobile inference).
+
+\section{Demonstration Evidence}
+\todo{Add screenshots: CI run, coverage report, a trace of the state-machine events for UC-04, and the rectified
+synthetic board with square grid. A live phone demo is NOT yet available (see Section~\ref{sec:limits}).}
+
+\section{Iteration Outcome}
+The core module is implemented and passes 45 automated tests (94.7\% line coverage at the time of writing). It is
+verified on simulated streams only; the live phone interface and real-board validation remain for Iteration 2.

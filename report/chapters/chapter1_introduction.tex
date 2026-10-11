@@ -1,0 +1,74 @@
+\chapter{Introduction and Project Vision}
+\section{Project Overview}
+Chesstor is a smartphone-based ``physical chess tutor''. A phone on a stand observes a real chessboard during a game,
+reconstructs the position as a digital game state, and (in later iterations) shows engine analysis and feedback on
+the live camera view. Planned user-facing modes are live tracking with feedback, PGN upload and analysis,
+pre-recorded video analysis, and personal analytics. This mid-report concentrates on the \emph{core module}: the
+component that turns a stream of imperfect camera observations into a trusted game state.
+
+\section{Problem Statement}
+Given a time-ordered stream of camera observations $O_{1:t}$ of a physical chessboard, estimate the true chess state
+$S_t$ while accounting for the previous trusted state $S_{t-1}$, per-observation confidence, temporal consistency and
+the legal-transition relation $L(S_{t-1},S_t)$. The system must distinguish a stable state, a transient disturbance
+(hand, shadow, motion blur), a genuine move, and unrecoverable uncertainty, and must never silently corrupt the trusted state.
+
+\section{Problem Context and Motivation}
+Physical chess lacks immediate, friction-free tactical feedback. Players either digitise moves manually, use
+smart boards costing several hundred dollars, or review games after the fact, by which time tactical mistakes are
+forgotten. A phone is already owned by most players, so a camera-based solution would lower the barrier. The
+significance of \emph{state integrity} is that a single wrongly accepted move makes every later engine suggestion
+refer to the wrong position.
+
+\section{Project Vision}
+A low-cost, camera-only system that a player can set up in under a minute and trust: it tracks the game, flags when it
+is unsure instead of guessing, and teaches the player through timely, engine-verified feedback.
+
+\section{Project Objectives}
+\begin{enumerate}
+\item Maintain a trusted digital board state from a live camera stream with $\geq 95\%$ correct move confirmation in controlled live trials (target, to be frozen before final evaluation).
+\item Keep false move confirmations $\leq 1$ per 100 stable/occluded events in controlled tests.
+\item Recover automatically from $\geq 90\%$ of temporary observation failures (hand occlusion, brief camera shake).
+\item Confirm a move with median latency $\leq 2$\,s after the board becomes visually stable.
+\item Operate across camera angles, lighting conditions, board types and piece materials, as required by the committee (Chapter~3).
+\item Deliver engine analysis on confirmed states only, as an on-device or local component.
+\item Provide a reproducible evaluation harness comparing frame-only, temporal-only, legal-only and proposed methods.
+\end{enumerate}
+These are engineering targets, not claimed results; they are frozen before the main evaluation.
+
+\section{Project Scope}
+\textbf{Included:} standard 8$\times$8 chess; one board and one phone camera; indoor controlled to moderately variable
+conditions; continuous observation; live move detection; legal validation; uncertainty handling and recovery;
+manual correction; Stockfish analysis; visual overlay; PGN/video upload analysis; guest-mode usage.
+\textbf{Excluded:} other board games and variants; multiple boards; robotic play; online multiplayer; cloud-scale
+recognition service; tournament broadcast automation; guaranteed operation under arbitrary placement.
+\textbf{Optional extensions} (only after core evaluation): automatic orientation, PGN export, move explanations, limited AR.
+
+\section{Project Modules}
+\begin{description}
+\item[Module 1: Vision and board reconstruction] camera capture, board localisation, perspective rectification, 64-square extraction, per-square observation (occupancy/colour now; full piece classes later).
+\item[Module 2: State tracking and move inference (core)] temporal buffer, legal-hypothesis scoring, confirmation policy, uncertainty/recovery, session state machine, manual correction.
+\item[Module 3: Engine and tutoring] Stockfish analysis of confirmed states, move classification, explanations (an LLM may phrase explanations but never determines truth).
+\item[Module 4: Application and data] Flutter app, overlay, upload flows, analytics, guest/optional-account data layer (Chapter~5).
+\item[Module 5: Evaluation infrastructure] simulator, ground-truth protocol, metrics, logs, CI regression gate.
+\end{description}
+
+\section{Stakeholders and User Classes}
+Casual and club players (primary; want low-effort feedback), chess learners (want explanations and review), coaches
+(want game records), the supervisor and FYP committee (want a defensible, evaluated contribution). Users
+differ in hand size, handedness and skin tone, which the vision component must tolerate (Section~\ref{sec:ethics}).
+
+\section{Success Criteria}
+Success is the objective thresholds above, evaluated against the baselines B1--B4 on a held-out set of physical boards
+and live sequences, plus task completion in a small acceptance study. Exact thresholds are frozen before testing.
+
+\section{Constraints and Assumptions}
+Single phone camera; fixed or stand-mounted phone during a move; the game starts from the standard position
+(initial state is anchored by the user); white at the bottom after calibration; limited team size and one semester
+per phase; Stockfish is GPL-licensed so distribution terms must be reviewed; real-board data must be self-captured or
+properly licensed. Mobile on-device inference is a goal, not yet a proven fact.
+
+\section{Ethical, Legal and DEI Considerations}\label{sec:ethics}
+\textbf{DEI:} test with different hand sizes, left/right-handed players and skin tones, since hands are the main
+occluder. \textbf{Ethics/privacy:} process video locally where possible; store only derived data (FEN, moves) off-device;
+obtain consent for any recorded games; do not retain raw participant video by default. \textbf{Legal:} use properly
+licensed datasets and piece imagery; document the licence of every dataset, model and library (Section~\ref{sec:deps}).

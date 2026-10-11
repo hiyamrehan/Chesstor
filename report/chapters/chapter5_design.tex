@@ -1,0 +1,70 @@
+\chapter{System Design}
+\section{System Architecture}
+The system is layered (L0--L11 in the implementation specification). The core path is:
+frame $\to$ quality gate $\to$ board localisation/tracking $\to$ rectification $\to$ 64-square extraction $\to$
+per-square observation $\to$ temporal buffer $\to$ legal-hypothesis scoring $\to$ confirmation policy $\to$ trusted
+state $\to$ FEN/history $\to$ Stockfish $\to$ overlay and logs. The proposal's four-tier architecture
+(presentation, edge, cloud application, data/analytics) is retained, with the privacy rule that only FEN and moves,
+never video, cross the device boundary.
+\todo{Insert architecture diagram figure (redraw the proposal diagram, updated for guest mode).}
+
+\section{Architectural Components}
+\begin{longtable}{p{0.22\textwidth}p{0.45\textwidth}p{0.2\textwidth}}
+\toprule Component & Responsibility & Status\\ \midrule
+Camera handler & Capture, timestamps, frame quality & Planned (Flutter)\\
+Board detector & Corners, orientation, homography & Manual corners done; auto planned\\
+Observer & Per-square occupancy/colour probabilities & Classical baseline done\\
+Tracker (core) & Buffer, hypotheses, confirmation, state machine & Done\\
+Engine service & Stockfish on confirmed states & Wrapper done\\
+Tutor & Move classification, explanation text & Planned\\
+Data service & Games, moves, analysis, optional accounts & Designed\\
+Evaluation harness & Simulator, baselines, metrics & Done\\
+\bottomrule
+\end{longtable}
+
+\section{Interfaces and Dependencies}
+The observer exposes \texttt{ObservationFrame(timestamp, probs[64$\times$3], visible[64], quality)}; the tracker
+consumes frames and returns \texttt{Commit} objects. This boundary lets the recogniser be replaced (classical $\to$
+CNN $\to$ detector) without touching the core. External dependencies are listed in Section~\ref{sec:deps}.
+
+\section{Architecture Decisions and Rationale}
+\begin{itemize}
+\item \textbf{Observation = occupancy + colour now:} the rules identify the piece, so a cheap, robust observation can be tested first; full 13-class recognition follows.
+\item \textbf{Deterministic scoring, not a learned tracker:} explainable, testable, and enough for the first implementation; weights are tunable and frozen before evaluation.
+\item \textbf{Trusted state mutates in one place:} everything else can wait, doubt or escalate.
+\item \textbf{Guest mode by default:} live tracking and local history need no account.
+\end{itemize}
+
+\section{Design Evolution}
+Since the proposal: (1) the tracker's unexplained-evidence gate became a graded margin penalty after stress tests
+showed the hard gate rejected correct moves under persistent errors (Ch.~7); (2) a missed-ply (two-ply) hypothesis
+was added for recovery; (3) the baselines B1--B3 were made explicit ablation switches in the same code path.
+
+\section{Domain Model}
+Entities: \emph{Session}, \emph{TrustedState} (board, side to move, castling/en-passant rights), \emph{ObservationFrame},
+\emph{Hypothesis} (0--2 plies, predicted square labels), \emph{Commit} (moves, SAN, score, margin), \emph{Event} (state
+transitions), \emph{EngineResult}. \todo{Insert class diagram.}
+
+\section{Data Design}\label{sec:data}
+\textbf{Why accounts?} Live tracking and analysis of a single game need no account. An account is justified only
+to (a) keep game history and analytics across devices and (b) back up PGNs. We therefore provide \textbf{guest mode}
+(on-device storage only) and \textbf{optional sign-in}.
+\textbf{Schema (relational draft):}
+\begin{longtable}{p{0.18\textwidth}p{0.7\textwidth}}
+\toprule Table & Key fields\\ \midrule
+user & user\_id PK, email, display\_name, created\_at (cloud only; absent in guest mode)\\
+game & game\_id PK, user\_id FK null, source (live/pgn/video), started\_at, result, pgn\_text\\
+move & game\_id FK, ply, san, uci, fen\_after, confirmed\_at, confidence\\
+analysis & game\_id FK, ply, eval\_cp, mate\_in, best\_move, classification (best/weak/blunder), explanation\\
+session\_log & session\_id PK, game\_id FK, device, model\_version, config\_version, events\_json\\
+\bottomrule
+\end{longtable}
+\todo{Team to confirm the DBMS (e.g.\ SQLite on device; PostgreSQL or Firebase in cloud) and justify in one paragraph; draw the ERD.}
+
+\section{Process / Behavior Design}
+The session state machine (IDLE, CALIBRATING, INITIALIZING, TRACKING, TRANSITION, CONFIRMING, UNCERTAIN,
+LOST\_BOARD, MANUAL\_CORRECTION, ENDED) is implemented with an explicit allowed-transition table; illegal
+transitions raise errors and are unit-tested. The confirmation policy: a change enters TRANSITION; when the
+window is stable the decision is \emph{commit} (best hypothesis wins by margin), \emph{no move} (transient), or
+\emph{unsure} (UNCERTAIN, re-evaluated each frame, escalating to MANUAL\_CORRECTION after a timeout).
+\todo{Insert state diagram and a sequence diagram for UC-04.}

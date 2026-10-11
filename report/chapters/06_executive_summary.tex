@@ -1,0 +1,21 @@
+\chapter*{Executive Summary}
+\addcontentsline{toc}{chapter}{Executive Summary}
+\textbf{Problem.} Players of physical chess cannot get live engine feedback or an automatic game record without
+manual entry or $\$500+$ smart boards. \textbf{Approach.} A phone camera observes the board; the system rectifies the
+board, observes 64 squares, and reasons over time and chess rules to decide whether a change is a genuine move,
+a transient (hand, motion), or uncertain. \textbf{Contribution.} A temporal, rule-constrained state-reconstruction
+pipeline evaluated against frame-independent baselines under controlled disturbances, with Stockfish treated as a
+downstream component only.
+
+\textbf{Research gap.} Existing systems (Chapter~2) demonstrate image-to-FEN conversion and offline or high-latency
+analysis, and are evaluated mainly as recognition pipelines. We found no work in our review that isolates and
+quantifies how much temporal memory and legal-transition constraints improve state \emph{integrity} (false moves,
+desynchronisation, recovery) under occlusion. This claim is bounded by our literature review and will be
+re-checked in FYP-2.
+
+\textbf{Status at mid-evaluation.} Implemented and unit-tested: state machine, temporal buffer, legal-hypothesis
+scoring, uncertainty/recovery, vision front-end on synthetic renders, evaluation harness, CI/CD. Not yet done:
+real-board dataset, learned recogniser, mobile application, on-device latency, user acceptance study, backend and
+analytics. \textbf{Validation status.} Results so far are on simulated streams only (Chapter~7).
+\textbf{Principal risks.} Persistent real-world recognition errors (glare, similar pieces), generalisation across
+board and piece materials, and mobile latency.

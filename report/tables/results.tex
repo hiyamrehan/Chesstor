@@ -1,0 +1,62 @@
+\begin{longtable}{p{0.27\textwidth}rrrr}
+\toprule
+System & Move acc. & False conf./100 & Desync & Median lat. (s)\\ \midrule
+\endhead
+\multicolumn{5}{l}{\textbf{A. Random games, normal light (10 games, seed 200)}}\\
+B1 frame-only & 0.110 & 154.0 & 1.00 & 0.40\\
+B2 temporal-only & 1.000 & 0.0 & 0.00 & 0.27\\
+B3 legal-only & 0.780 & 9.7 & 0.20 & 0.30\\
+B4 proposed & 1.000 & 0.0 & 0.00 & 0.20\\
+B4-nomask (ablation) & 1.000 & 0.0 & 0.00 & 0.67\\
+\midrule
+\multicolumn{5}{l}{\textbf{B. Random games, dim light (seed 201)}}\\
+B1 frame-only & 0.117 & 153.3 & 0.90 & 0.87\\
+B2 temporal-only & 0.980 & 1.3 & 0.10 & 0.40\\
+B3 legal-only & 0.767 & 8.0 & 0.30 & 0.40\\
+B4 proposed & 1.000 & 0.0 & 0.10 & 0.27\\
+B4-nomask (ablation) & 1.000 & 0.0 & 0.10 & 0.67\\
+\midrule
+\multicolumn{5}{l}{\textbf{C. Random games, glare (seed 202)}}\\
+B1 frame-only & 0.067 & 129.7 & 0.90 & 0.57\\
+B2 temporal-only & 0.980 & 2.3 & 0.10 & 0.47\\
+B3 legal-only & 0.753 & 11.0 & 0.50 & 0.47\\
+B4 proposed & 1.000 & 0.0 & 0.00 & 0.27\\
+B4-nomask (ablation) & 1.000 & 0.0 & 0.00 & 0.73\\
+\midrule
+\multicolumn{5}{l}{\textbf{D. Special-move games, normal (18 games, seed 203)}}\\
+B1 frame-only & 0.188 & 147.9 & 0.67 & 0.40\\
+B2 temporal-only & 0.812 & 3.5 & 0.22 & 0.47\\
+B3 legal-only & 0.910 & 6.2 & 0.11 & 0.33\\
+B4 proposed & 1.000 & 0.0 & 0.00 & 0.20\\
+B4-nomask (ablation) & 1.000 & 0.0 & 0.00 & 0.67\\
+\midrule
+\multicolumn{5}{l}{\textbf{E. Special-move games, dim (seed 204)}}\\
+B1 frame-only & 0.118 & 149.3 & 0.72 & 0.47\\
+B2 temporal-only & 0.812 & 3.5 & 0.17 & 0.53\\
+B3 legal-only & 0.757 & 17.4 & 0.33 & 0.40\\
+B4 proposed & 1.000 & 0.0 & 0.00 & 0.20\\
+B4-nomask (ablation) & 1.000 & 0.0 & 0.00 & 0.67\\
+\midrule
+\multicolumn{5}{l}{\textbf{F. Special moves, 2\% persistent errors (seed 205)}}\\
+B1 frame-only & 0.076 & 102.8 & 0.89 & 0.40\\
+B2 temporal-only & 0.368 & 24.3 & 0.56 & 0.40\\
+B3 legal-only & 0.688 & 11.8 & 0.33 & 0.40\\
+B4 proposed & 0.826 & 1.4 & 0.11 & 0.47\\
+B4-nomask (ablation) & 0.847 & 0.0 & 0.06 & 0.73\\
+\midrule
+\multicolumn{5}{l}{\textbf{G. Random games, 3\% persistent errors (seed 206)}}\\
+B1 frame-only & 0.061 & 93.2 & 1.00 & 0.40\\
+B2 temporal-only & 0.297 & 17.9 & 0.70 & 0.50\\
+B3 legal-only & 0.655 & 8.4 & 0.40 & 0.40\\
+B4 proposed & 0.699 & 5.1 & 0.30 & 0.60\\
+B4-nomask (ablation) & 0.757 & 1.7 & 0.30 & 0.73\\
+\midrule
+\multicolumn{5}{l}{\textbf{H. Special moves, 8\% frame error + 30\% mask miss (seed 207)}}\\
+B1 frame-only & 0.104 & 105.6 & 0.83 & 0.73\\
+B2 temporal-only & 0.465 & 46.5 & 0.39 & 0.40\\
+B3 legal-only & 0.757 & 11.8 & 0.17 & 0.47\\
+B4 proposed & 1.000 & 0.0 & 0.00 & 0.40\\
+B4-nomask (ablation) & 1.000 & 0.0 & 0.00 & 0.73\\
+\midrule
+\bottomrule
+\end{longtable}

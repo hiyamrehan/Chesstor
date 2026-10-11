@@ -1,0 +1,60 @@
+\chapter{Proposal Feedback and Iteration Plan}
+\section{Proposal Feedback Summary}
+The FYP committee approved the proposal (project F26-064) with minor modifications. In summary: all promised
+components must be completed; the database and schema must be clarified; the need for sign-up/login must be explained
+or a guest mode provided; the research gap, planned work and limitations must be stated clearly; external tools and
+all claims must be specified and documented; the system should work across camera angles, lighting, board types and
+piece materials (glass, wooden, plastic); occlusion must be handled using temporal data; and latency must be minimal.
+(The project name in the committee record, ``Mentora'', is a placeholder; the product is Chesstor.)
+
+\section{Proposal Action Register}
+\begin{longtable}{p{0.05\textwidth}p{0.24\textwidth}p{0.31\textwidth}p{0.12\textwidth}p{0.18\textwidth}}
+\toprule
+No. & Feedback & Action taken / planned & Status & Evidence\\
+\midrule
+1 & Complete all promised components & Scope split into Iteration 1 (core) and Iteration 2 (app, tutor, upload, analytics); mapping in Ch.~9 & In progress & Sec.~\ref{sec:iter1}, \ref{sec:iter2}\\
+2 & Clarify database and schema & Guest-first data design with optional cloud account; schema defined (Sec.~\ref{sec:data}) & Designed; \todo{team to confirm choice of DBMS} & Sec.~\ref{sec:data}\\
+3 & Justify login or provide guest mode & Guest mode is the default; account only for cross-device history and analytics & Designed & Sec.~\ref{sec:data}\\
+4 & State research gap, plan, limitations & Chapter~2 gap/limitations; Chapter~8 limitations & Done (draft) & Ch.~2, 8\\
+5 & Specify external tools and document claims & External-component table; unverified claims marked \textbackslash todo & Partly done & Sec.~\ref{sec:deps}, Table~2.1\\
+6 & Work across angles, lighting, boards, materials & Disturbance matrix in evaluation plan; real multi-board dataset planned & Planned & Sec.~\ref{sec:valplan}\\
+7 & Handle occlusion with temporal data & Occlusion = missing evidence; temporal window; tested & Implemented (simulated) & Ch.~6--7\\
+8 & Minimal latency & Latency measured per confirmation; frame-rate and window profiling planned & Partly measured (simulated) & Sec.~\ref{sec:results}\\
+\bottomrule
+\end{longtable}
+
+\section{Iteration Strategy}
+Development follows a vertical-slice, risk-first strategy: first prove that a physical move can be mapped to a legal
+transition (the highest-risk assumption), then add robust recognition, then temporal reconstruction, then mobile
+deployment, and finally engine analysis and UI polish. Work is integrated through GitHub with feature branches,
+pull-request review, and automated CI (lint, tests, a frozen-seed regression gate); tagged versions are released
+by the CD workflow.
+
+\section{Iteration 1 Plan}\label{sec:iter1}
+\textbf{Objective:} the core module with CI/CD. \textbf{Features:} calibration/rectification, per-square observation,
+temporal buffer, legal-transition inference (UC-03 to UC-14), uncertainty and manual correction, Stockfish
+wrapper, evaluation harness. \textbf{Deliverables:} tested package, CI/CD, simulated ablation results.
+\textbf{Evidence:} repository, CI runs, test report (Ch.~6--7).
+
+\section{Iteration 2 Plan}\label{sec:iter2}
+\textbf{Objective:} real data and the live application. \textbf{Features:} real-board dataset and learned recogniser,
+automatic board detection and tracking, Flutter live-tracking screen with overlay, PGN upload analysis, tutor
+feedback and analytics, mobile profiling. \textbf{Evidence:} real-board metrics, device latency, demo.
+
+\section{Work Breakdown and Responsibilities}
+As planned in the proposal: Huzaifa --- CV pipeline and board reconstruction; Hiyam --- state tracking and move
+inference; Madiha --- Stockfish and tutoring logic; everyone --- integration, testing and evaluation. Repository
+folders map to these owners (\texttt{vision/}, \texttt{tracker.py}/\texttt{candidates.py}, \texttt{engine.py}).
+\todo{Replace with actual per-member task log from the issue tracker.}
+
+\section{Progress Against Plan}
+Core module, front-end on synthetic images, harness and CI/CD are implemented. The Flutter application, real-board
+data collection and tutor/analytics backend have not started.
+\todo{Insert planned-vs-actual milestone table with dates.}
+
+\section{Delays, Deviations and Recovery Plan}
+\textbf{Deviation 1:} the core was implemented and tested in Python/laptop first, before the phone application,
+to de-risk state reconstruction (as recommended by the implementation specification). \textbf{Deviation 2:} the POC
+shown at the proposal defense was a UI mock-up; the mid-evaluation requires a live/functional interface, which is the
+top priority of the next phase. \textbf{Recovery:} start the Flutter camera/overlay slice and real-data capture
+immediately, in parallel with learned-recogniser work.

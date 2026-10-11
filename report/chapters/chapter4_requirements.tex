@@ -1,0 +1,92 @@
+\chapter{Software Requirements}
+\section{User Interactions / Use Cases}
+\begin{longtable}{p{0.09\textwidth}p{0.3\textwidth}p{0.5\textwidth}}
+\toprule ID & Use case & Success condition\\ \midrule
+UC-01 & Calibrate board & Stable board geometry accepted\\
+UC-02 & Initialise from starting position & Initial trusted state matches the board\\
+UC-03 & Observe stable board & No spurious moves generated\\
+UC-04 & Player moves a piece & Correct move confirmed once, after the board is stable\\
+UC-05 & Capture & Correct source, destination, capture\\
+UC-06 & Castling & Correct four-square transition and castling rights\\
+UC-07 & En passant & Correct three-square transition\\
+UC-08 & Promotion & Promotion recognised (queen by default; under-promotion via manual confirmation)\\
+UC-09 & Hand occlusion & No false state mutation; recovery afterwards\\
+UC-10 & Camera shake / blur & Low-quality frames ignored; no corruption\\
+UC-11 & Lighting change & Confidence reflects it; no silent desynchronisation\\
+UC-12 & Ambiguous observation & System waits or asks; no invented move\\
+UC-13 & Illegal physical move & Rejected; trusted state preserved\\
+UC-14 & Manual correction & Corrected state becomes new anchor; tracking continues\\
+UC-15 & Long session (30--60 min) & No unrecoverable crash or desync\\
+UC-16 & Engine analysis & Best move/evaluation for confirmed states only\\
+UC-17 & Upload PGN / video & Game analysed and stored\\
+\bottomrule
+\end{longtable}
+
+\section{Use Case Diagram}
+\todo{Draw UML use-case diagram (actors: Player, Coach; system: Chesstor; external: Stockfish) with tikz-uml or a drawing tool and place in \texttt{figures/}.}
+
+\section{Detailed Use Cases}
+Detailed flows for UC-04, UC-09, UC-13 and UC-14 are in Appendix~B. \todo{Write the four detailed use-case tables (preconditions, main flow, alternate flow, postcondition).}
+
+\section{Functional Requirements}
+\subsection{Module 1: Vision and Board Reconstruction}
+\begin{description}
+\item[FR-1.1] The system shall rectify the board to a canonical top-down image from four corners.
+\item[FR-1.2] The system shall extract 64 square crops with a border margin.
+\item[FR-1.3] The system shall output, per square, class probabilities and a visibility flag.
+\item[FR-1.4] The system shall assign each frame a quality score and ignore frames below threshold.
+\item[FR-1.5] (Iteration 2) The system shall detect and track the board automatically and re-detect on drift.
+\end{description}
+\subsection{Module 2: State Tracking and Move Inference}
+\begin{description}
+\item[FR-2.1] The system shall keep a trusted board that changes only by confirmed transitions.
+\item[FR-2.2] The system shall confirm a move only when the post-move state is stable across a window.
+\item[FR-2.3] The system shall score all legal move sequences (up to two plies) against observations and confirm only if the best exceeds the runner-up by a margin.
+\item[FR-2.4] The system shall support captures, castling, en passant and promotion.
+\item[FR-2.5] The system shall treat occluded squares as unknown, not empty.
+\item[FR-2.6] The system shall enter UNCERTAIN on ambiguity or contradiction without changing the trusted state, and request manual correction on persistent conflict.
+\item[FR-2.7] The system shall maintain castling and en-passant rights from move history.
+\item[FR-2.8] The system shall accept a user-supplied correction as the new anchor.
+\end{description}
+\subsection{Module 3--4: Engine, Tutor, Application (Iteration 2)}
+\begin{description}
+\item[FR-3.1] Stockfish shall analyse only confirmed states. \quad
+\item[FR-3.2] Moves shall be classified (best/weak/blunder) from evaluation change.
+\item[FR-4.1] The app shall provide live tracking with overlay, PGN upload, video upload, history and analytics.
+\item[FR-4.2] The app shall work in guest mode without an account.
+\end{description}
+
+\section{Non-Functional Requirements}
+\subsection{Reliability}
+NFR-R1: $\leq 1$ false confirmation per 100 stable/occluded events (target). NFR-R2: $\geq 90\%$ recovery from temporary failures. NFR-R3: a 30--60 minute session without unrecoverable crash.
+\subsection{Usability}
+NFR-U1: the user can always see system status (tracking, move detected, uncertain, manual correction). NFR-U2: setup and calibration without expert help. NFR-U3: usable by players of different hand size, handedness and skin tone.
+\subsection{Performance}
+NFR-P1: median confirmation latency $\leq 2$\,s after the board is stable (target). NFR-P2: sustained inference rate on the target phone to be measured. NFR-P3: engine analysis within a configurable time limit.
+\subsection{Security}
+NFR-S1: camera processing local by default; no raw video uploaded. NFR-S2: only derived data (FEN/moves) leaves the device, and only if the user opts in. NFR-S3: licences of all external components documented.
+
+\section{Acceptance Criteria}
+\begin{longtable}{p{0.12\textwidth}p{0.55\textwidth}p{0.2\textwidth}}
+\toprule Req. & Objective check & Where\\ \midrule
+FR-2.1/2.6 & Feeding an illegal physical change leaves the trusted FEN unchanged & \texttt{test\_uc13}\\
+FR-2.4 & Castling, en passant, promotion streams yield the correct final board & \texttt{test\_uc06--08}\\
+FR-2.5 & 3 s of hand hover produces zero commits & \texttt{test\_uc09}\\
+FR-1.4 & Frames with $Q<Q_{\min}$ are dropped and counted & \texttt{test\_uc10}\\
+FR-2.8 & After manual correction the next move is tracked & \texttt{test\_uc14}\\
+NFR-R1 & False confirmations on held-out streams & Ch.~7 (simulated), FYP-2 (real)\\
+\bottomrule
+\end{longtable}
+
+\section{Requirements Traceability}
+\begin{longtable}{p{0.12\textwidth}p{0.28\textwidth}p{0.22\textwidth}p{0.25\textwidth}}
+\toprule Req. & Design element & Implementation & Test\\ \midrule
+FR-1.1/1.2 & Rectification & \texttt{vision/geometry.py} & \texttt{test\_vision.py}\\
+FR-1.3 & Observation & \texttt{vision/occupancy.py}, \texttt{observation.py} & \texttt{test\_vision.py}\\
+FR-1.4, 2.5 & Quality gate, mask & \texttt{tracker.update} & \texttt{test\_uc09, uc10}\\
+FR-2.1--2.3 & Confirmation policy & \texttt{tracker.py}, \texttt{candidates.py} & \texttt{test\_uc04, uc05}\\
+FR-2.4 & Hypothesis generation & \texttt{candidates.py} & \texttt{test\_candidates.py}, \texttt{uc06--08}\\
+FR-2.6, 2.8 & State machine & \texttt{tracker.py} & \texttt{test\_state\_machine.py}, \texttt{uc13, uc14}\\
+FR-3.1 & Engine wrapper & \texttt{engine.py} & \texttt{test\_stockfish\_*}\\
+\bottomrule
+\end{longtable}

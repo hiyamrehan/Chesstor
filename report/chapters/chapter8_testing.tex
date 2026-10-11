@@ -1,0 +1,76 @@
+\chapter{Testing and Early Validation}
+\section{Testing Strategy}
+Testing (does the code meet requirements?), evaluation (is the method better than baselines?) and acceptance (can
+users do the task?) are separated. This chapter covers the first two on simulated data; acceptance testing is planned.
+
+\section{Test Levels and Techniques}
+Unit tests (hypotheses, geometry, state machine, config); scenario/integration tests that replay simulated
+streams through the tracker for each use case; a determinism test (same seed gives identical results); a CLI test;
+and a frozen-seed regression gate that fails CI if the proposed method stops beating the baselines. Static analysis
+by ruff; a coverage gate of 85\%.
+
+\section{Test Cases}
+\begin{longtable}{p{0.11\textwidth}p{0.5\textwidth}p{0.25\textwidth}}
+\toprule ID & Scenario & Expected\\ \midrule
+UC-03 & 30\,s without moves & zero commits\\
+UC-04 & e2--e4 & committed once, correct board\\
+UC-05 & capture & correct capture\\
+UC-06 & O-O and O-O-O & correct board, rights updated\\
+UC-07 & en passant & correct board\\
+UC-08 & promotion & queen by default\\
+UC-09 & 3\,s hand hover over 10 squares & zero commits\\
+UC-10 & low-quality frames & dropped, state unchanged\\
+UC-12 & source and destination ambiguous & no move invented\\
+UC-13 & rook jumps over pawn & trusted state preserved; UNCERTAIN\\
+UC-13b & unresolved conflict 20\,s & MANUAL\_CORRECTION requested\\
+UC-14 & manual correction then next move & move tracked\\
+--- & two plies changed before stable & both recovered\\
+\bottomrule
+\end{longtable}
+Full list in Appendix~C (the repository \texttt{tests/} directory).
+
+\section{Test Results}\label{sec:results}
+All 45 automated tests pass (1 Stockfish integration test is skipped locally and runs in CI where Stockfish is
+installed). \textbf{Evaluation (simulated, held-out seeds, frozen configuration).} Latency is measured from the
+moment the piece is placed. Each condition uses 10 random games of 30 plies or 18 curated special-move games.
+Table~\ref{tab:sim} gives the full results.
+{\small\input{tables/results}}
+\captionof{table}{Ablation on simulated streams. Move acc. = fraction of ground-truth moves confirmed correctly in
+their window; False conf./100 = spurious or wrong confirmations per 100 moves; Desync = fraction of games ending with
+a wrong board (after oracle manual corrections, which are also counted separately in the JSON).}\label{tab:sim}
+
+\textbf{Observations.} (1) Frame-only B1 is unusable under hand occlusion (move accuracy 0.07--0.19). (2) Temporal
+confirmation alone (B2) is already strong when errors are independent, but it cannot represent castling, en passant
+(0.81 on special-move games) and degrades sharply under persistent errors (0.30--0.37). (3) Legal constraints alone (B3) fail without
+temporal confirmation because they commit during motion. (4) The proposed B4 reaches move accuracy 1.0 in conditions A--E and H (one dim-light game in B still ended with a wrong final board, which we have not yet analysed) and
+leads the baselines in F and G, but is \emph{not} robust: under persistent errors it reaches 0.83 and 0.70
+move accuracy with 1.4 and 5.1 false confirmations per 100 moves, above our target of $\leq1$.
+(5) Interestingly, the no-mask ablation does slightly better than B4 under persistent errors (0.847 vs.\ 0.826;
+0.757 vs.\ 0.699) because the simulated mask also discards evidence; it is slower (median 0.67\,s vs.\ 0.20\,s).
+We do not yet know if this holds with a real hand detector.
+
+\section{Acceptance Testing / Validation}
+Not yet performed. Planned: 8--12 players set up, calibrate, play 10 moves, trigger an occlusion and resolve an
+uncertainty (Section~\ref{sec:valplan}).
+
+\section{Edge and Failure Cases}
+Illegal physical moves, unresolved conflicts, ambiguous source/destination, missed plies and blurred frames are covered.
+Not covered: under-promotion (needs piece classification), a board that is moved or rotated mid-game (LOST\_BOARD is
+implemented as a state but has no vision trigger yet), multiple simultaneous hands, and a player correcting a
+move mid-way.
+
+\section{Defects and Corrective Actions}
+\begin{longtable}{p{0.06\textwidth}p{0.4\textwidth}p{0.4\textwidth}}
+\toprule \# & Defect found & Corrective action\\ \midrule
+1 & Stability window of 0.5\,s was longer than 8 frames at 15 FPS (0.47\,s): confirmations only happened after a dropped frame stretched the span & Default set to 0.4\,s; lesson: derive time windows from frame rate\\
+2 & Simulator noise was independent per frame, so B4 scored 100\% even at 15\% frame error: benchmark saturated & Added persistent-error noise, the realistic failure mode; reported separately\\
+3 & Hard ``$\leq1$ unexplained'' gate rejected correct moves under persistent errors (accuracy 0.42) & Replaced by graded margin penalty, tuned on dev seeds only (accuracy $\approx0.70$)\\
+4 & Relaxed gate committed one ply before the two-ply recovery hypothesis could be considered & Strict gates tried before relaxed gate\\
+5 & Latency anchored at end of hand retreat gave negative values & Anchored at piece placement\\
+\bottomrule
+\end{longtable}
+
+\section{Current Validation Status}
+Validated: logic correctness on simulated streams and unit/scenario tests. \textbf{Not validated:} any claim about
+real boards, real cameras, real hands, other piece materials, phone latency or users. The simulator is a debugging
+and stress tool (dataset D0/D4), not evidence for the final claims.

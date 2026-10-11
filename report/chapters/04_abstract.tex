@@ -1,0 +1,17 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+Physical chess offers no live digital record or engine feedback unless players re-enter moves by hand or buy
+expensive sensor boards. Chesstor is a smartphone-based system that watches a physical game through a camera and
+maintains a trustworthy digital game state. Recognising a board in a photograph and calling a chess engine are
+established technologies; the project's contribution is the harder problem of \emph{keeping} the digital state
+correct over time when observations are noisy, occluded by hands, or momentarily contradictory. We combine
+temporal confirmation of observations with chess-rule constraints: a visual change is committed only if it is
+stable across a window of frames and is explained by a legal move sequence with sufficient margin over all
+alternatives; otherwise the trusted state is preserved and the system waits, becomes uncertain, or asks for
+manual correction. At the FYP-1 mid stage we have implemented the core state-reconstruction module (session state
+machine, temporal buffer, legal-transition scoring including castling, en passant and promotion, uncertainty and
+recovery policy), a classical vision front-end, a baseline/ablation evaluation harness, and a GitHub CI/CD
+pipeline. On \emph{simulated} observation streams the proposed method outperforms frame-only, temporal-only and
+legal-only baselines, but degrades under persistent per-square errors; these numbers are development evidence, not
+final results. Real-board data collection, the learned recogniser, the Flutter mobile application and
+on-device profiling are planned for FYP-2.

@@ -1,0 +1,75 @@
+\chapter{Research and Existing Solutions}
+\section{Research Method / Approach}
+We reviewed (i) peer-reviewed work on physical chess state reconstruction, (ii) open-source live-board projects, and
+(iii) consumer products. For each we recorded the input (single image vs.\ stream), whether temporal or rule
+information is used, the reported accuracy/latency, and its evaluation conditions. The review is ongoing; the novelty
+statement in this chapter will be re-validated before FYP-2.
+\todo{Add search log: databases/queries used, date, inclusion criteria.}
+
+\section{Existing Solutions / Products}
+\begin{description}
+\item[Wölflein and Arandjelović] Board-state reconstruction from a single image with a RANSAC-based board
+localiser and two CNNs, plus a large public dataset (roughly 1{,}450 participants and 2.5M frames in our notes). The
+paper reports high per-square accuracy and low error on an unseen chess set \cite{wolflein2021}.
+\todo{Verify exact figures and cite the dataset licence from the paper before submission.}
+\item[Czyżewski et al.] Classical CV plus ML that iteratively processes the image; reported as lighting-resilient with high lattice-point and piece detection rates \cite{czyzewski2020}. \todo{verify numbers.}
+\item[ARChessAnalyzer] A physical-board-to-analysis pipeline with CNN piece segmentation and augmented-reality output; our notes record about 93\% accuracy and a latency of several seconds from live capture to AR \cite{archess}. \todo{verify.}
+\item[Wolarz] Automated chess move recognition \cite{wolarz}. \todo{summarise method and results.}
+\item[Nayan] A tile-based recogniser operating on a live feed \cite{nayan}. \todo{summarise.}
+\item[Consumer tools] Manual calculators (e.g.\ Chess Sigma Next Move) require the user to enter the position; post-game recorders (e.g.\ Chessgaze) digitise after play; smart boards provide live capture but cost $\$500+$.
+\end{description}
+
+\section{Comparison of Existing Solutions}
+\begin{longtable}{p{0.2\textwidth}p{0.13\textwidth}p{0.13\textwidth}p{0.14\textwidth}p{0.13\textwidth}p{0.15\textwidth}}
+\toprule
+Solution & Live stream & Temporal reasoning & Legal-move constraints & Occlusion study & Needs special hardware\\
+\midrule
+Wölflein \& Arandjelović & No (image) & No & No\todo{verify} & Limited & No\\
+Czyżewski et al. & No (image) & No & No\todo{verify} & Lighting only & No\\
+ARChessAnalyzer & Yes (slow) & \todo{verify} & \todo{verify} & \todo{verify} & No\\
+Nayan & Yes & \todo{verify} & Yes (legal inference) & \todo{verify} & No\\
+Calculators / recorders & No & No & Partly & n/a & No\\
+Smart boards & Yes & n/a & n/a & n/a & Yes ($\$500+$)\\
+Chesstor (this work) & Yes & Yes & Yes & Evaluated (planned) & No\\
+\bottomrule
+\end{longtable}
+Cells marked TODO are claims we have not yet verified against the primary sources; they must be completed
+(the committee requires every claim to be specified and documented).
+
+\section{Limitations and Gaps}
+Prior systems are mostly evaluated as \emph{recognition} pipelines on per-image accuracy. What is under-studied, in
+the sources we reviewed, is the \emph{state-integrity} problem in a live game: how often does a wrong or transient
+observation corrupt the tracked game, how well can temporal and rule information prevent that, how quickly does
+the system recover, and what does confirmation cost in latency. Existing live demos also tend to assume controlled
+conditions, whereas the committee asks for robustness across angles, lighting, boards and piece materials.
+
+\section{Proposed Solution}
+We propose a streaming pipeline in which the trusted state changes only through a confirmation policy. Evidence is
+accumulated in a temporal buffer; candidate transitions are \emph{legal move sequences} from the previous trusted
+state; each is scored by agreement with the observed squares; occluded squares contribute no evidence; and a change is
+committed only when the best hypothesis beats all others by a margin, otherwise the system waits or asks the user.
+What we plan to do: build and evaluate this method against baselines on real boards. What we do \emph{not} claim:
+novel board detection, novel piece classification, or a novel chess engine.
+
+\section{Complex Computing Problem}
+The problem has conflicting requirements (accuracy vs.\ latency vs.\ mobile compute; confidence threshold vs.\
+responsiveness), no standard procedure for deciding whether a noisy change is a real move, interdependent stages
+(localisation $\to$ recognition $\to$ inference $\to$ future state), ill-defined requirements (optimal window and
+thresholds are empirical), and significant consequences (a wrong state invalidates all later analysis). The stress
+experiments in Chapter~7 already show a genuine trade-off between recovering from persistent errors and
+admitting false confirmations.
+
+\section{Technical Challenges}
+Hand and arm occlusion; motion blur and camera shake; glare and shadows; variation across boards and piece
+materials (wood, glass, plastic); oblique camera angles; distinguishing similar pieces; special moves that change
+more than two squares; correlated (persistent) recognition errors; real-time latency on a phone; and
+reproducible evaluation without leaking board or session identity between training and test.
+
+\section{Research Findings and Design Decisions}
+\begin{itemize}
+\item \textbf{Occupancy first:} the proposal POC asks whether occupancy/colour alone can identify the move. We built the core on occupancy+colour observations, with the rules supplying piece identity; full piece classification is added later and is needed for under-promotion.
+\item \textbf{Legal hypotheses over diffing:} comparing against all legal sequences handles castling and en passant without special cases, where a naive source/destination diff cannot (Section~\ref{sec:results}).
+\item \textbf{Occlusion as missing evidence:} occluded squares become ``unknown'', not ``empty'' (committee requirement).
+\item \textbf{Temporal evidence by mean log-likelihood} over a window, which keeps decision margins on a single-frame scale and is robust to isolated glitches.
+\item \textbf{Python core, then port:} the algorithm is developed and tested in Python first; the deployment path (on-device vs.\ local server) is decided only after profiling (Chapter~10).
+\end{itemize}
