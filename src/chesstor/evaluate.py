@@ -8,6 +8,9 @@ from dataclasses import dataclass, field, replace
 import chess
 import numpy as np
 
+import os 
+
+
 from .config import TrackerConfig
 from .simulate import SimConfig, SimTruth, simulate_game
 from .tracker import State, Tracker
@@ -181,9 +184,6 @@ def to_markdown(results: dict[str, dict]) -> str:
         cells = [f"{r[c]:.3f}" if isinstance(r[c], float) else str(r[c]) for c in cols]
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
     return "\n".join(lines)
-
-
-import os 
 
 def dump(results: dict[str, dict], path: str) -> None:
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
