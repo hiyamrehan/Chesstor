@@ -49,3 +49,25 @@ class StockfishAnalyzer:
 
     def __exit__(self, *exc) -> None:
         self.close()
+
+
+def _pov_cp(score: chess.engine.PovScore, color: chess.Color) -> tuple[int, int | None]:
+    s = score.pov(color)
+    return s.score(mate_score=10000), s.mate()
+
+
+def analyse_lines(analyzer: StockfishAnalyzer, board: chess.Board, multipv: int = 3,
+                  time_ms: int | None = None) -> list[dict]:
+    """Top lines for the side to move. cp is from the side-to-move's point of view."""
+    limit = chess.engine.Limit(time=(time_ms / 1000) if time_ms else analyzer.limit.time)
+    infos = analyzer._engine.analyse(board, limit, multipv=multipv)
+    infos = infos if isinstance(infos, list) else [infos]
+    out = []
+    for info in infos:
+        pv = info.get("pv", [])
+        if not pv:
+            continue
+        cp, mate = _pov_cp(info["score"], board.turn)
+        out.append({"uci": pv[0].uci(), "san": board.san(pv[0]), "cp": cp, "mate": mate,
+                    "pv": [m.uci() for m in pv[:6]]})
+    return out

@@ -11,7 +11,9 @@ never video, cross the device boundary.
 \section{Architectural Components}
 \begin{longtable}{p{0.22\textwidth}p{0.45\textwidth}p{0.2\textwidth}}
 \toprule Component & Responsibility & Status\\ \midrule
-Camera handler & Capture, timestamps, frame quality & Planned (Flutter)\\
+Camera handler (app) & Browser/WebView camera, frame upload & Done; tested with synthetic images only\\
+API service & Sessions, frames, calibration, manual correction, PGN review & Done (FastAPI)\\
+App (React + Capacitor) & Guest login, live tracking, upload, results & POC UI wired; phone build untested\\
 Board detector & Corners, orientation, homography & Manual corners done; auto planned\\
 Observer & Per-square occupancy/colour probabilities & Classical baseline done\\
 Tracker (core) & Buffer, hypotheses, confirmation, state machine & Done\\
@@ -26,6 +28,22 @@ Evaluation harness & Simulator, baselines, metrics & Done\\
 The observer exposes \texttt{ObservationFrame(timestamp, probs[64$\times$3], visible[64], quality)}; the tracker
 consumes frames and returns \texttt{Commit} objects. This boundary lets the recogniser be replaced (classical $\to$
 CNN $\to$ detector) without touching the core. External dependencies are listed in Section~\ref{sec:deps}.
+
+\subsection*{API between the app and the core}
+The React app talks to the core through a small HTTP API (FastAPI). Raw frames are processed in memory and never stored.
+\begin{longtable}{p{0.38\textwidth}p{0.5\textwidth}}
+\toprule Endpoint & Purpose\\ \midrule
+POST /api/sessions & start a live or simulated session (colour chosen by the player)\\
+POST /api/sessions/\{id\}/calibrate & four tapped corners + frame; board orientation found by trying four rotations and checking the starting position\\
+POST /api/sessions/\{id\}/frame & one camera frame $\to$ quality, occlusion mask, observation, tracker; returns the trusted state\\
+POST /api/sessions/\{id\}/manual & user restores the board; new trusted anchor\\
+DELETE /api/sessions/\{id\} & end session; returns the PGN of confirmed moves\\
+POST /api/analyze/pgn & per-move engine review, accuracy, evaluation series\\
+POST /api/analyze/video & not implemented (returns 501)\\
+\bottomrule
+\end{longtable}
+The occlusion mask is tone-agnostic (border-ring colour deviation, no skin-colour model) so it does not fail on wooden boards or
+bias across skin tones; its accuracy on real hands is untested.
 
 \section{Architecture Decisions and Rationale}
 \begin{itemize}

@@ -1,0 +1,10 @@
+{
+  "description": "Enhance your chess skills with real-time move tracking and feedback through augmented reality, perfect for players seeking to improve their game.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

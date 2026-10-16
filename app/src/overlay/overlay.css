@@ -1,0 +1,18 @@
+/* Overlay styles. Overlay-specific CSS lives ONLY here (index.css is frozen). Each stage owns its section. */
+
+/* ===== Stage 1 (Huzaifa): root, board outline, debug grid ===== */
+.overlay-root { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.overlay-svg { position: absolute; inset: 0; overflow: visible; }
+.ov-outline { fill: rgba(143, 175, 138, .06); stroke: var(--best, #8faf8a); stroke-width: 2; stroke-dasharray: 6 4; }
+.ov-dot { fill: rgba(240, 220, 190, .85); stroke: rgba(0, 0, 0, .6); stroke-width: .6; }
+.ov-dot-a1 { fill: #e8c06a; stroke: #000; stroke-width: 1; }
+.ov-label { fill: rgba(240, 220, 190, .7); font-family: ui-monospace, monospace; paint-order: stroke; stroke: rgba(0, 0, 0, .7); stroke-width: 2px; }
+.ov-label-corner { fill: #e8c06a; font-family: ui-monospace, monospace; font-weight: 700; paint-order: stroke; stroke: #000; stroke-width: 2.5px; }
+.overlay-debug-toggle { position: absolute; right: 10px; bottom: 8px; z-index: 5; pointer-events: auto; padding: 5px 10px; border-radius: 999px; font-size: 9px; color: var(--bronze-light, #d8bfa3); background: rgba(20, 20, 19, .72); border: 1px solid rgba(255, 255, 255, .12); }
+.overlay-debug-toggle.on { background: var(--bronze, #af8e71); color: var(--bg, #141413); }
+.live-boardview-wrap { position: relative; width: 300px; }
+.live-boardview-wrap .live-boardview { width: 100%; }
+
+/* ===== Stage 2 (Hiyam): highlights, status badge, paused banner ===== */
+
+/* ===== Stage 3 (Madiha): arrows, eval chip ===== */

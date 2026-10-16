@@ -48,12 +48,15 @@ B1 no temporal window, no rules, no mask; B2 temporal+mask, naive source/destina
 
 \section{Tools, Frameworks and Technologies}
 Python, python-chess, NumPy, OpenCV, PyYAML, pytest, pytest-cov, ruff, GitHub Actions, Stockfish (via UCI),
-LaTeX. Planned: Flutter, PyTorch (training), ONNX/TFLite (mobile inference).
+LaTeX, FastAPI, React 19, Vite, Tailwind CSS, Capacitor (phone packaging), Vitest. Planned: PyTorch (training), ONNX/TFLite
+(mobile inference). \emph{Decision to confirm:} the proposal listed Flutter; the team's POC is React, so the app is packaged
+with Capacitor instead, avoiding a rewrite.
 
 \section{Demonstration Evidence}
 \todo{Add screenshots: CI run, coverage report, a trace of the state-machine events for UC-04, and the rectified
-synthetic board with square grid. A live phone demo is NOT yet available (see Section~\ref{sec:limits}).}
+synthetic board with square grid. The web demo (simulated feed) can be shown today; a real-camera phone demo needs the Android build (Section~\ref{sec:limits}).}
 
 \section{Iteration Outcome}
-The core module is implemented and passes 45 automated tests (94.7\% line coverage at the time of writing). It is
-verified on simulated streams only; the live phone interface and real-board validation remain for Iteration 2.
+The core module is implemented and passes 60 automated Python tests, 8 frontend unit tests and 2 end-to-end UI tests (about 95\% Python line coverage). The
+POC interface is connected to the core. Everything is verified on simulated streams and synthetic images only; real-camera
+phone tests and real-board validation remain for Iteration 2.

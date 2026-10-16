@@ -38,7 +38,7 @@ wrapper, evaluation harness. \textbf{Deliverables:} tested package, CI/CD, simul
 
 \section{Iteration 2 Plan}\label{sec:iter2}
 \textbf{Objective:} real data and the live application. \textbf{Features:} real-board dataset and learned recogniser,
-automatic board detection and tracking, Flutter live-tracking screen with overlay, PGN upload analysis, tutor
+automatic board detection and tracking, real-camera testing of the live-tracking screen on a phone, PGN upload analysis, tutor
 feedback and analytics, mobile profiling. \textbf{Evidence:} real-board metrics, device latency, demo.
 
 \section{Work Breakdown and Responsibilities}
@@ -48,13 +48,13 @@ folders map to these owners (\texttt{vision/}, \texttt{tracker.py}/\texttt{candi
 \todo{Replace with actual per-member task log from the issue tracker.}
 
 \section{Progress Against Plan}
-Core module, front-end on synthetic images, harness and CI/CD are implemented. The Flutter application, real-board
-data collection and tutor/analytics backend have not started.
+Core module, front-end on synthetic images, harness and CI/CD are implemented. The team's React POC interface is now connected to the core (guest login, live tracking with camera or simulated feed,
+PGN review) and has an Android packaging configuration, but has not been run on a real phone camera. Real-board
+data collection, video analysis, and the analytics/data layer have not started.
 \todo{Insert planned-vs-actual milestone table with dates.}
 
 \section{Delays, Deviations and Recovery Plan}
 \textbf{Deviation 1:} the core was implemented and tested in Python/laptop first, before the phone application,
 to de-risk state reconstruction (as recommended by the implementation specification). \textbf{Deviation 2:} the POC
-shown at the proposal defense was a UI mock-up; the mid-evaluation requires a live/functional interface, which is the
-top priority of the next phase. \textbf{Recovery:} start the Flutter camera/overlay slice and real-data capture
+shown at the proposal defense was a UI mock-up; the mid-evaluation requires a live/functional interface; the POC has since been wired to the core (Chapter~6). \textbf{Recovery:} test the camera path on a physical phone and start real-data capture
 immediately, in parallel with learned-recogniser work.

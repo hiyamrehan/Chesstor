@@ -53,6 +53,39 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: eval-results, path: results/ci_special.json }
 
+  frontend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: app } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: app/package-lock.json }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with: { name: app-dist, path: app/dist }
+
+  e2e:
+    # Real app + real API + real Stockfish, driven through the UI (jsdom).
+    needs: [lint, test, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: app/package-lock.json }
+      - run: sudo apt-get update && sudo apt-get install -y stockfish && echo "/usr/games" >> "$GITHUB_PATH"
+      - run: pip install -e ".[dev]"
+      - run: cd app && npm ci
+      - name: Start API and run UI end-to-end test
+        run: |
+          chesstor serve --port 8123 &
+          for i in $(seq 1 30); do curl -sf localhost:8123/api/health && break; sleep 1; done
+          cd app && CHESSTOR_E2E_URL=http://127.0.0.1:8123 npm test
+
   build:
     needs: [lint, test]
     runs-on: ubuntu-latest

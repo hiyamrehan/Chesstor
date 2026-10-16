@@ -14,6 +14,11 @@ data/raw/
 *.toc
 *.bbl
 *.blg
+
+app/node_modules/
+app/dist/
+app/android/
+app/.env
 .venv/
 venv/
 env/

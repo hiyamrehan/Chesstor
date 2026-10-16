@@ -28,32 +28,56 @@ def _sigmoid(x: np.ndarray | float) -> np.ndarray | float:
     return 1.0 / (1.0 + np.exp(-x))
 
 
+def _parity(sq: int) -> int:
+    return (sq % 8 + sq // 8) % 2
+
+
 @dataclass
 class OccupancyModel:
-    occ_thr: float = 0.0
-    occ_scale: float = 1.0
+    occ_thr: tuple[float, float] = (0.0, 0.0)      # per square colour (dark, light)
+    occ_scale: tuple[float, float] = (1.0, 1.0)
     col_thr: float = 0.0
     col_scale: float = 1.0
     calibrated: bool = False
 
     def calibrate(self, canon_start: np.ndarray, crops: list[np.ndarray] | None = None) -> OccupancyModel:
-        """Fit thresholds from the standard starting position (white at bottom, ranks 1-2 / 7-8 occupied)."""
+        """Fit thresholds from the standard starting position (white at bottom, ranks 1-2 / 7-8 occupied).
+
+        Occupancy is calibrated separately for dark and light squares, and the threshold is placed towards
+        the *hardest* occupied squares (their lower quartile): a white piece on a light square has far less
+        contrast than a black one, and a single global threshold left such squares at ~0.65 confidence.
+        """
         from .geometry import split_squares
         crops = crops or split_squares(canon_start)
         feats = [_features(c) for c in crops]
-        empty = [feats[s][0] for s in range(16, 48)]
-        occ = [feats[s][0] for s in list(range(0, 16)) + list(range(48, 64))]
+        occ_sq = list(range(0, 16)) + list(range(48, 64))
+        thr, scale = [], []
+        for par in (0, 1):
+            e = np.array([feats[s][0] for s in range(16, 48) if _parity(s) == par])
+            o = np.array([feats[s][0] for s in occ_sq if _parity(s) == par])
+            hard = float(np.percentile(o, 25))
+            if hard <= e.mean():
+                raise ValueError("calibration failed: starting position not recognisable "
+                                 "(check orientation: white pieces must be at the bottom)")
+            thr.append(float((hard + e.mean()) / 2))
+            scale.append(float(max(1e-3, (hard - e.mean()) / 6)))
         wb = [feats[s][1] for s in range(0, 16)]
         bb = [feats[s][1] for s in range(48, 64)]
-        if np.mean(occ) <= np.mean(empty) or np.mean(wb) <= np.mean(bb):
+        if np.mean(wb) <= np.mean(bb):
             raise ValueError("calibration failed: starting position not recognisable "
                              "(check orientation: white pieces must be at the bottom)")
-        self.occ_thr = float((np.mean(occ) + np.mean(empty)) / 2)
-        self.occ_scale = float(max(1e-3, (np.mean(occ) - np.mean(empty)) / 6))
+        self.occ_thr, self.occ_scale = (thr[0], thr[1]), (scale[0], scale[1])
         self.col_thr = float((np.mean(wb) + np.mean(bb)) / 2)
         self.col_scale = float(max(1e-3, (np.mean(wb) - np.mean(bb)) / 6))
         self.calibrated = True
         return self
+
+    def start_position_matches(self, canon: np.ndarray) -> int:
+        """How many of 64 squares are labelled as in the standard starting position (white at bottom)."""
+        import chess
+
+        from ..observation import label_map
+        return int((self.predict(canon).argmax(1) == label_map(chess.Board())).sum())
 
     def predict(self, canon: np.ndarray) -> np.ndarray:
         """(64, 3) probabilities over EMPTY / WHITE / BLACK."""
@@ -63,7 +87,8 @@ class OccupancyModel:
         out = np.zeros((64, 3))
         for sq, crop in enumerate(split_squares(canon)):
             fg, bright = _features(crop)
-            p_occ = float(_sigmoid((fg - self.occ_thr) / self.occ_scale))
+            par = _parity(sq)
+            p_occ = float(_sigmoid((fg - self.occ_thr[par]) / self.occ_scale[par]))
             p_white = float(_sigmoid((bright - self.col_thr) / self.col_scale))
             out[sq, EMPTY] = 1 - p_occ
             out[sq, WHITE] = p_occ * p_white

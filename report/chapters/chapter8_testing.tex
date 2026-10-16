@@ -30,8 +30,9 @@ UC-14 & manual correction then next move & move tracked\\
 Full list in Appendix~C (the repository \texttt{tests/} directory).
 
 \section{Test Results}\label{sec:results}
-All 45 automated tests pass (1 Stockfish integration test is skipped locally and runs in CI where Stockfish is
-installed). \textbf{Evaluation (simulated, held-out seeds, frozen configuration).} Latency is measured from the
+All 60 Python tests, 8 frontend unit tests and 2 end-to-end tests pass. The end-to-end tests render the real app, run
+against the real API with Stockfish, and drive guest login, live tracking on the simulated feed, and PGN review through the UI.
+API tests also cover the camera pipeline on synthetic phone views, including a board seen from the black side. \textbf{Evaluation (simulated, held-out seeds, frozen configuration).} Latency is measured from the
 moment the piece is placed. Each condition uses 10 random games of 30 plies or 18 curated special-move games.
 Table~\ref{tab:sim} gives the full results.
 {\small\input{tables/results}}
@@ -67,6 +68,7 @@ move mid-way.
 3 & Hard ``$\leq1$ unexplained'' gate rejected correct moves under persistent errors (accuracy 0.42) & Replaced by graded margin penalty, tuned on dev seeds only (accuracy $\approx0.70$)\\
 4 & Relaxed gate committed one ply before the two-ply recovery hypothesis could be considered & Strict gates tried before relaxed gate\\
 5 & Latency anchored at end of hand retreat gave negative values & Anchored at piece placement\\
+6 & Found by the API test: the occupancy classifier was correct on every square but only 0.65 confident on a white piece on a light square, below the tracker's 0.70 bar, so no move was ever detected & Occupancy calibrated per square colour with the threshold placed towards the hardest squares; confidence now $\geq0.91$\\
 \bottomrule
 \end{longtable}
 

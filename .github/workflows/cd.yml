@@ -25,6 +25,10 @@ jobs:
           chesstor evaluate --scenario special --games 18 --seed 103 --out release/eval_special.json
           chesstor evaluate --games 10 --plies 30 --seed 100 --out release/eval_random.json
           cp configs/default.yaml release/config_frozen.yaml
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Build web app
+        run: cd app && npm ci && npm run typecheck && npm test && npm run build && tar czf ../release/app-dist.tgz dist
       - run: python -m build
       - uses: softprops/action-gh-release@v2
         with:

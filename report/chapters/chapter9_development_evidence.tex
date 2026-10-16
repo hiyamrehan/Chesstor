@@ -2,8 +2,8 @@
 \section{Work Completed}
 Core module, front-end on synthetic images, evaluation harness, test suite, CI/CD workflows, this report.
 \section{Work Remaining}
-Real-board data and ground truth; learned recogniser; automatic board detection; Flutter live interface and
-overlay; tutor/analytics; data layer; mobile profiling; acceptance study.
+Real-board data and ground truth; learned recogniser; automatic board detection; real-phone testing of the live interface;
+video analysis; tutor/analytics; data layer; mobile profiling; acceptance study.
 \section{Individual Responsibilities}
 Per the proposal: Huzaifa (CV pipeline, board reconstruction), Hiyam (state tracking, move inference), Madiha
 (Stockfish, tutoring logic); everyone on integration, testing, evaluation.
@@ -29,7 +29,8 @@ OpenCV & geometry, preprocessing & Apache-2.0 \todo{verify}\\
 NumPy, PyYAML & numerics, config & BSD / MIT \todo{verify}\\
 Roboflow Chess Pieces dataset & candidate training data (292 images) & \todo{check licence}\\
 Wölflein--Arandjelović dataset & candidate data & \todo{check licence}\\
-Flutter, PyTorch & app, training (planned) & \todo{verify}\\
+FastAPI, uvicorn, React, Vite, Tailwind, Capacitor & API and app & \todo{verify (MIT/BSD/Apache expected)}\\
+PyTorch & training (planned) & \todo{verify}\\
 \bottomrule
 \end{longtable}
 \section{Risks and Mitigation}
@@ -40,13 +41,15 @@ Poor generalisation across boards/materials & Split by board and session; held-o
 Occlusion handler quality unknown & Evaluate hand/occlusion detector separately; ablation B4-nomask\\
 Mobile latency & Profile early on target phone; reduce inference rate adaptively\\
 Overlap with existing systems & Frame contribution as state integrity; document gap and limits\\
-Schedule (app not started) & Start Flutter slice now; reduce optional features\\
+Schedule (phone build untested) & Run the Android build on a real phone early; reduce optional features\\
 \bottomrule
 \end{longtable}
 \section{Security and Privacy Considerations}
 Local processing by default; only FEN/moves may be stored in the cloud and only with sign-in; consent for any
 recorded game; no raw video retained by default; session logs avoid personal data.
 \section{Current Limitations}\label{sec:limits}
-No live phone interface yet; no real-board data or results; observation limited to occupancy and colour (no
+The live interface exists (web, and an Android packaging config) but has only been exercised with synthetic images and a
+simulated feed, never a real camera or phone; the core runs on a laptop/server, not on the phone; video analysis, analytics and
+accounts are not implemented (analytics shows sample data); no real-board data or results; observation limited to occupancy and colour (no
 under-promotion); manual corners; assumes standard start and white at the bottom; classical classifier calibrated
 per session; simulated noise may not reflect real error structure; one hand-occlusion model; latency not measured on a phone.

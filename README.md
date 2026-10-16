@@ -12,12 +12,21 @@ chesstor evaluate --scenario special --games 18 --seed 203   # B1-B4 ablation on
 python scripts/results_to_latex.py results report/tables/results.tex
 ```
 
+## Start here
+`CONTEXT.md` (project), `HANDOFF.md` (state + next steps), `AGENTS.md` (rules for AI assistants), `docs/` (details, index in `docs/README.md`).
+
+## App (phone + web)
+The `app/` folder is the team's React POC, now connected to this core (see `app/README.md`):
+`chesstor serve --static app/dist`. The UI is wrapped for Android/iOS with Capacitor.
+
 ## Layout
 | Path | Owner (proposal) | What |
 |---|---|---|
 | `src/chesstor/vision/` | Huzaifa | rectification, square extraction, occupancy classifier, synthetic renderer |
 | `src/chesstor/tracker.py`, `candidates.py`, `observation.py` | Hiyam | state machine, temporal buffer, legal-hypothesis scoring |
-| `src/chesstor/engine.py` | Madiha | Stockfish wrapper (confirmed states only) |
+| `src/chesstor/engine.py`, `api/analysis.py` | Madiha | Stockfish wrapper, PGN review |
+| `src/chesstor/api/` | all | HTTP API the app talks to |
+| `app/` | all | React app (POC UI, wired to the API), Capacitor config |
 | `simulate.py`, `evaluate.py`, `scripts/` | all | simulator, baselines B1-B4, CI regression gate |
 
 ## Honesty note
