@@ -13,7 +13,7 @@
 10. PGN review is synchronous (a long game takes tens of seconds); no job queue.
 ## Overlay-specific
 - Letterbox mapping unverified on a real phone; landscape/rotation unverified. Debug `Grid` is dev-only unless `?overlayDebug=1`/`VITE_OVERLAY_DEBUG=1`.
-- Overlay drift between calibration and use (see 3). Slots are stubs until Stages 2/3 land.
+- Overlay drift between calibration and use (see 3). Stage 2 (highlights, status, banner) is in; arrows and the eval chip are stubs until Stage 3 lands. Stage 2 styling has not been checked on a physical phone screen (only in tests).
 ## Process risks
 - GitHub repo base lacks `api/` + `app/` (see `HANDOFF.md` section 0). 37 report `\todo` markers remain. Licences (Stockfish/python-chess GPL; datasets) unverified.
 - AI-assisted code must be understood by its owner for the defence; disclose per handbook.

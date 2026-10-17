@@ -4,7 +4,7 @@
 > what to do next". Update it at the end of every task.
 
 ## 0. Do this before anything else (repo base mismatch)
-The team's GitHub repo (`Chestor-main`) was uploaded **without `api/` and `app/`**. It is the older core-only commit.
+The team's GitHub repo (`Chesstor-main`) was uploaded **without `api/` and `app/`**. It is the older core-only commit.
 Stage 1 (and the whole overlay split) needs `src/chesstor/api/*` and `app/*`, so those must land on `main` first.
 `patches/` contains a ready series (apply with `git am`, in order):
 1. `0001-*` adds the API + React app + report updates (the base the division doc assumes)
