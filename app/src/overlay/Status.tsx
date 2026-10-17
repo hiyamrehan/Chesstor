@@ -2,6 +2,7 @@
 // STAGE 3 (Madiha) wires <EvalChip/> in here (see the marker below). Plain HTML (not SVG) over the video.
 // Display only: the real buttons ("I restored the board", End session) live in Live.tsx's session sheet, and the
 // overlay root is pointer-events: none. The banner's `action` is exposed as data-action for styling/tests.
+import EvalChip from "./EvalChip";
 import type { Banner, SlotProps } from "./types";
 
 const HINT: Record<NonNullable<Banner["action"]>, string> = {
@@ -28,7 +29,7 @@ export default function Status({ model }: SlotProps) {
           )}
         </div>
       )}
-      {/* STAGE 3 (Madiha): render <EvalChip model={model} /> here */}
+      <EvalChip model={model} />
       {banner && (
         <div className="ov-banner" data-testid="overlay-banner" data-action={banner.action ?? undefined}>
           <strong>{banner.text}</strong>
