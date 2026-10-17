@@ -6,7 +6,7 @@ arrows, evaluation, and a manual-correction prompt (spec s.20). Three problems, 
 | Stage | Owner | Branch | Problem | State |
 |---|---|---|---|---|
 | 1 | Huzaifa | `overlay/1-geometry` | where is each square on the screen | **done** (this repo state) |
-| 2 | Hiyam | `overlay/2-state-logic` | what to show, and when | stubs in place |
+| 2 | Hiyam | `overlay/2-state-logic` | what to show, and when | **done** (this repo state) |
 | 3 | Madiha | `overlay/3-arrows` | arrows and engine info | stubs in place |
 
 ## Data flow
@@ -86,3 +86,22 @@ Tests: geometry for straight, knight, castling (all four), promotion, near/far s
    *White's left-hand side*, in the corner nearest White's pieces. Check **both** colours (play from the other side
    of the board) and a rotated phone. Check the dots stay on squares in portrait and landscape.
 4. Attach a screenshot/recording to the PR. Reference picture of the expected geometry: `docs/img/overlay_geometry.png`.
+
+## Verifying Stage 2 on the demo feed (no board, no camera)
+1. `chesstor serve --port 8000`, then `npm run dev` in `app`, open `localhost:8443`, **Live tracking (demo)**.
+2. The gold-tinted pair of squares is the last confirmed move (`last-from` faint, `last-to` strong); it follows the moves.
+3. The badge top-left follows the tracker: green **Board locked · Tracking**; amber **Move detected · confirming**
+   while a move settles; amber **Uncertain · checking** plus the **Not sure, suggestions paused** banner when the
+   simulated hand covers the board. The small bar next to the text is reading quality (weaker of frame quality and
+   visible fraction; a UI heuristic, not a probability).
+4. Arrows do not exist until Stage 3. `model.arrows` is already filled and gated; `Arrows.tsx` is still a stub.
+5. Automated: `npm test` (`model.test.ts` checks the gate over every state x turn x analysis combination;
+   `Stage2.test.tsx` renders the real overlay and checks highlight pixel positions for White and Black).
+
+## Stage 2 handoff note (for Stage 3, Madiha)
+`model.arrows` is ready: top 3 engine lines, `rank` = the engine's rank, `from/to/uci/san/piece/tone` filled, and
+empty whenever the gate is closed. **Check `model.suggestionsAllowed` only; do not re-derive state or turn.**
+`model.evalChip` is ready (user's point of view, `best/danger/neutral` tone) and is `null` unless the board is
+TRACKING with fresh analysis. Render `<EvalChip model={model} />` at the marked comment in `Status.tsx`. Highlights
+use `data-hl-square` (the debug grid owns `data-square`). Stage 2 hides the last-move highlight in LOST_BOARD and
+MANUAL_CORRECTION; the banner `action` is exposed as `data-action` but the actual buttons live in `Live.tsx`.
