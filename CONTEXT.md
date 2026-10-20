@@ -1,7 +1,7 @@
 # Chesstor: project context (read this first)
 
-> For humans and LLMs. Everything needed to understand the project without the original chats. Last updated at the
-> end of **overlay Stage 1** (branch `overlay/1-geometry`). Companion files: `HANDOFF.md` (what to do next),
+> For humans and LLMs. Everything needed to understand the project without the original chats. Last updated after
+> **overlay Stage 2** (Stages 1 and 2 merged; Stage 3 pending). Companion files: `HANDOFF.md` (what to do next),
 > `AGENTS.md` (rules), `docs/` (details).
 
 ## 1. What this is
@@ -79,11 +79,11 @@ expected to be the weak link on real boards (the main FYP-2 risk).
   special-move runs; **0.83 and 0.70** under 2% / 3% persistent per-square errors, with 1.4 and 5.1 false
   confirmations per 100 moves (target <= 1, so *not met*). B1 frame-only 0.07-0.19. No-mask ablation slightly beat B4
   under persistent errors (unexplained). See `docs/EVALUATION.md`.
-- Tests at end of Stage 1: **71 pytest**, **31 vitest** (+2 e2e with a server) and 8 `todo` placeholders for later stages.
+- Tests now: **71 pytest**; **72 vitest** (+2 e2e with a live server = 74) and 4 `todo` placeholders for Stage 3.
 
 ## 8. People and ownership
-Huzaifa: CV pipeline + board reconstruction (+ overlay Stage 1). Hiyam: state tracking + move inference (+ overlay
-Stage 2). Madiha: Stockfish + tutoring logic (+ overlay Stage 3). Everyone: integration, testing, evaluation. In the
+Huzaifa: CV pipeline + board reconstruction (+ overlay Stage 1, done). Hiyam: state tracking + move inference (+ overlay
+Stage 2, done). Madiha: Stockfish + tutoring logic (+ overlay Stage 3, pending). Everyone: integration, testing, evaluation. In the
 defence each member must be able to explain and modify their modules; AI-assisted code must be understood, not pasted.
 
 ## 9. Constraints and house rules
