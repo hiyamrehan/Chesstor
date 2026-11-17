@@ -11,8 +11,16 @@ describe.skipIf(!URL_)("app + live server", () => {
     Element.prototype.scrollTo = () => undefined;
     const real = globalThis.fetch;
     // the app uses relative /api paths; point them at the test server
+    // Node >= 24 cannot serialise jsdom's FormData (the server then sees no fields: "no PGN provided").
+    // The app only sends text fields in this test, so send them urlencoded; FastAPI Form() accepts both.
+    const fixBody = (init?: RequestInit): RequestInit | undefined => {
+      if (!init || typeof FormData === "undefined" || !(init.body instanceof FormData)) return init;
+      const params = new URLSearchParams();
+      init.body.forEach((v, k) => params.append(k, String(v)));
+      return { ...init, body: params.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" } };
+    };
     globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) =>
-      real(typeof input === "string" && input.startsWith("/api") ? `${URL_}${input}` : input, init)) as typeof fetch;
+      real(typeof input === "string" && input.startsWith("/api") ? `${URL_}${input}` : input, fixBody(init))) as typeof fetch;
   });
   afterEach(cleanup);
 
@@ -42,6 +50,9 @@ describe.skipIf(!URL_)("app + live server", () => {
     window.dispatchEvent(new Event("resize")); // jsdom has no ResizeObserver; make <Overlay> re-measure
     fireEvent.click(await screen.findByText("Grid"));
     await waitFor(() => expect(document.querySelectorAll("[data-square]").length).toBe(64));
+    // BUG-001: exactly one status display (the overlay badge); the legacy tracking label is gone
+    expect(screen.getAllByTestId("overlay-status")).toHaveLength(1);
+    expect(document.querySelector(".tracking-label")).toBeNull();
     expect(screen.getByText(/Board locked|Move detected/)).toBeTruthy();
   }, 60000);
 
