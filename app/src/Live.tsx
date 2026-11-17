@@ -8,15 +8,6 @@ import { Back, Icon, Pressable, Glass } from "./ui";
 
 type Phase = "starting" | "calibrate" | "running" | "error";
 
-const STATE_TONE: Record<string, string> = {
-  TRACKING: "var(--best)",
-  TRANSITION: "var(--amber)",
-  CONFIRMING: "var(--amber)",
-  UNCERTAIN: "var(--danger)",
-  MANUAL_CORRECTION: "var(--danger)",
-  LOST_BOARD: "var(--danger)",
-};
-
 function grabFrame(video: HTMLVideoElement, maxW = 960): Promise<Blob> {
   const scale = Math.min(1, maxW / video.videoWidth);
   const canvas = document.createElement("canvas");
@@ -217,7 +208,6 @@ export default function LiveSession({
   };
 
   // ---- render --------------------------------------------------------------------------------------------
-  const tone = snap ? (STATE_TONE[snap.state] ?? "var(--muted)") : "var(--muted)";
   const rows = snap && snap.analysis.status === "ready" && snap.turn === snap.color ? lineRows(snap) : [];
   const first = snap?.analysis.lines[0];
   const evalLabel = first && snap ? fmtEval(first.cp, first.mate, snap.turn, snap.color) : "—";
@@ -300,9 +290,6 @@ export default function LiveSession({
             <p>{error}</p>
             <Pressable className="mini-button" onClick={onExit}>Back</Pressable>
           </div>
-        )}
-        {phase === "running" && snap && (
-          <p className="tracking-label"><span style={{ background: tone, boxShadow: `0 0 8px ${tone}` }} /> {snap.status}</p>
         )}
         {phase === "calibrate" && error && <p className="calib-error">{error}</p>}
       </div>
