@@ -1,0 +1,25 @@
+﻿2e71118 Merge pull request #2 from hiyamrehan/fix/BUG-001-remove-legacy-tracking-label
+8951a5e e2e test and live fixes,93;/93tests passed
+d2199ac stckfish addition + e2e TSX update
+37f4005 BUG-001: remove legacy tracking label from Live screen
+e7961c7 Updated context and handoff MD fiels, consistency for upcoming milestones
+d812fd1 Merge pull request #1 from hiyamrehan/overlay/3-arrows
+2bf13e7 Stage 3: eval chip, wired into Status
+ed1bacd Merge remote-tracking branch 'origin/main' into overlay/3-arrows
+39f7f33 Stage 3: draw arrows + tests
+5ae978f Merge branch 'main' of https://github.com/hiyamrehan/Chestor
+6d5e747 Merge branch 'main' of https://github.com/hiyamrehan/Chestor
+a008953 recommit
+9a15b95 test
+85d56c3 fix
+d501602 stage 2 done
+ebb0c32 test
+8cb07e0 fix
+41a6454 stage 2 done
+ae8beaf Stage 3: arrow geometry (straight, knight L, castling, promotion) + tests
+4e6ee16 bismillah, huzaifas first commit, additions to viual tracking and overlay
+--- uncommitted ---
+D  apply_bug001_fix.py
+?? CHANGES_FOR_CLAUDE.txt
+?? frame.png
+?? scripts/calib_debug.py
