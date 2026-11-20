@@ -107,7 +107,9 @@ def test_unrecognisable_board_gives_helpful_calibration_error():
     sid = client.post("/api/sessions", json={}).json()["id"]
     r = client.post(f"/api/sessions/{sid}/calibrate", files={"image": ("f.jpg", jpeg(blank))},
                     data={"corners": "[[0.2,0.2],[0.8,0.2],[0.8,0.8],[0.2,0.8]]"})
-    assert r.status_code == 422 and "starting position" in r.json()["detail"]
+    # the message now says WHAT is wrong (here: no chessboard pattern inside the taps), not just "failed"
+    detail = r.json()["detail"]
+    assert r.status_code == 422 and detail.startswith("Could not lock the board") and "alternating" in detail
 
 
 def test_occlusion_mask_flags_hand_but_not_pieces_or_wood():
