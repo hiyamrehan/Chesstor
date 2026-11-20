@@ -8,6 +8,9 @@ const config: CapacitorConfig = {
   appName: "Chesstor",
   webDir: "dist",
   server: { androidScheme: "https", cleartext: true },
+  // The WebView page is https://localhost but the dev API is plain http on the laptop. Without this Android
+  // blocks the call as mixed content and the app shows "Cannot reach the Chesstor server".
+  android: { allowMixedContent: true },
 };
 
 export default config;

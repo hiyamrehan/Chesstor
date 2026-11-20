@@ -12,7 +12,7 @@ dependencies = ["python-chess>=1.10", "numpy>=1.24", "opencv-python-headless>=4.
 
 [project.optional-dependencies]
 api = ["fastapi>=0.110", "uvicorn>=0.29", "python-multipart>=0.0.9"]
-dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.4", "httpx>=0.27", "fastapi>=0.110", "python-multipart>=0.0.9"]
+dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.4", "httpx>=0.27", "fastapi>=0.110", "uvicorn>=0.29", "python-multipart>=0.0.9"]
 
 [project.scripts]
 chesstor = "chesstor.cli:main"

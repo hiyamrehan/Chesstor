@@ -11,7 +11,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p .",
     "cap:sync": "vite build && cap sync",
-    "cap:android": "vite build && cap sync android && cap open android"
+    "cap:android": "vite build && cap sync android && cap open android",
+    "cap:phone": "vite build --mode phone && cap sync android && cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

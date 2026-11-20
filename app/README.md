@@ -24,12 +24,17 @@ camera will not start; use the phone app below (or the simulated demo feed).
 ## Phone app (Android; iOS is the same with `@capacitor/ios` on a Mac)
 ```bash
 cd app
-cp .env.example .env     # set VITE_API_URL=http://<laptop-LAN-ip>:8000
+cp .env.example .env     # Windows: copy .env.example .env. Set VITE_API_URL=http://<laptop-LAN-ip>:8000
+                         # (use the laptop's current IPv4 from ipconfig; it changes with the network)
 npm run build
 npx cap add android && node scripts/android-prepare.mjs   # adds CAMERA permission
 npx cap sync android && npx cap open android              # run from Android Studio
 chesstor serve --host 0.0.0.0 --port 8000                 # on the laptop, same Wi-Fi
 ```
+If the app says it cannot reach the server: open `http://<laptop-LAN-ip>:8000/api/health` in the **phone's browser**. If that fails it is the
+network (same Wi-Fi? server started with `--host 0.0.0.0`? Windows Firewall allows port 8000?). If it works, check `.env`, then run
+`npm run build && npx cap sync android` again: the phone keeps running the old copy until you do.
+
 Architecture note (honest status): the phone captures and uploads frames; the **core runs on the laptop/server**
 (deployment Stage B in the spec). On-device inference is a later stage and must be proven by profiling before
 it is claimed. Raw frames are processed in memory and never stored.
