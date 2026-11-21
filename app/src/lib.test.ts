@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { contentRect, fenToCells, fmtEval, orient, seriesPath, speakSan, squareCentre, tapToNormalised } from "./lib";
+import {
+  contentRect,
+  fenToCells,
+  fmtEval,
+  normalisedToPx,
+  orient,
+  seriesPath,
+  speakSan,
+  squareCentre,
+  tapToNormalised,
+} from "./lib";
 
 const START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -63,5 +73,17 @@ describe("speakSan", () => {
     expect(speakSan("e4")).toBe("Pawn e 4");
     expect(speakSan("O-O")).toBe("castles kingside");
     expect(speakSan("Qxf7#")).toBe("Queen takes f 7, checkmate");
+  });
+});
+
+describe("normalisedToPx", () => {
+  it("is the inverse of tapToNormalised, including letterboxing", () => {
+    const rect = contentRect(400, 800, 1280, 720); // portrait box, landscape video -> bars top and bottom
+    const n = tapToNormalised(120, 410, rect)!;
+    const [px, py] = normalisedToPx(n, rect);
+    expect(px).toBeCloseTo(120, 6);
+    expect(py).toBeCloseTo(410, 6);
+    expect(normalisedToPx([0, 0], rect)).toEqual([rect.x, rect.y]);
+    expect(normalisedToPx([1, 1], rect)).toEqual([rect.x + rect.w, rect.y + rect.h]);
   });
 });
