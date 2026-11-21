@@ -17,7 +17,7 @@ minor; S4 idea/tech debt.
 | ID | Sev | Type | Status | Phase | Owner | Title |
 |---|---|---|---|---|---|---|
 | BUG-001 | S2 | BUG | FIXED (awaiting verification) | 0 | Huzaifa | Tracker status shown twice (legacy `tracking-label` still in `Live.tsx`); e2e fails |
-| BUG-002 | S3 | BUG | OPEN | 0 | Madiha | Eval chip has no CSS; drawn under the status badge |
+| BUG-002 | S3 | BUG | FIXED (awaiting verification) | 0 | Madiha | Eval chip has no CSS; drawn under the status badge |
 | BUG-003 | S2 | BUG | FIXED (awaiting verification) | 0 | Huzaifa | Real-server e2e test (single `overlay-status`) fails because of BUG-001 |
 | BUG-004 | S1 | LIMIT | OPEN | 3-5 | Hiyam | B4 misses false-confirmation target (<=1/100) under persistent errors: 1.4 (F), 5.1 (G); acc 0.83 / 0.70 |
 | BUG-005 | S2 | RISK | OPEN | 2 | Hiyam | B4-nomask (ablation) beats B4 under persistent errors; unexplained (mask may hurt) |
@@ -27,7 +27,7 @@ minor; S4 idea/tech debt.
 | BUG-009 | S3 | LIMIT | OPEN | 6 | shared | Sessions in memory only; CORS defaults to `*` (dev) |
 | BUG-010 | S3 | LIMIT | OPEN | 6 | Madiha | PGN review is synchronous; long games take tens of seconds; no job queue |
 | BUG-011 | S3 | DOC | OPEN | 0 | all | `CONTEXT.md`, `ROADMAP.md`, `TESTING.md` say Stage 3 is stubs / `it.todo`; stale |
-| BUG-012 | S4 | PROC | OPEN | 0 | all | `patches/` leftover and `.idea/` committed |
+| BUG-012 | S4 | PROC | FIXED (awaiting verification) | 0 | all | `patches/` leftover and `.idea/` committed |
 | BUG-013 | S3 | DOC | OPEN | 0 | all | Test counts disagree (HANDOFF 72+4 todo, report 93, rough count ~82). Measured 2026-11-16 (see SESSION_LOG): pytest 71, vitest 93 + 2 e2e = 95, no `it.todo`. Docs/report still to be updated |
 | BUG-014 | S1 | RISK | OPEN | 0 | Huzaifa | Overlay letterboxing, portrait/landscape, `getUserMedia` in WebView never run on a real phone |
 | BUG-015 | S1 | RISK | OPEN | 2 | Huzaifa | Classical classifier untrained; behaviour on real boards (glass, similar colours, glare) unknown |
