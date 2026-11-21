@@ -12,6 +12,7 @@ import math
 import chess
 import chess.pgn
 
+from ..tutor import tag_for
 from .engine_service import ENGINE
 
 MAX_PLIES = 240
@@ -25,16 +26,6 @@ def win_pct(cp: float) -> float:
 def move_accuracy(win_before: float, win_after: float) -> float:
     drop = max(0.0, win_before - win_after)
     return max(0.0, min(100.0, 103.1668 * math.exp(-0.04354 * drop) - 3.1669))
-
-
-def tag_for(loss_cp: float, is_best: bool) -> str:
-    if is_best or loss_cp <= 10:
-        return "Best"
-    if loss_cp <= 60:
-        return "Good"
-    if loss_cp <= 200:
-        return "Mistake"
-    return "Blunder"
 
 
 def _pawns(cp: float) -> str:
