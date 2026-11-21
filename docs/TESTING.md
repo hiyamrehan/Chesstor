@@ -6,12 +6,19 @@ than a baseline? see `EVALUATION.md`), **acceptance** (can users do the task? pl
 ## Commands
 ```bash
 pip install -e ".[dev]"                                   # once (needs Stockfish on PATH for engine tests)
-ruff check . && pytest --cov=chesstor --cov-fail-under=85  # Python: 71 tests at Stage 1, ~95% coverage
+ruff check . && pytest --cov=chesstor --cov-fail-under=85  # Python: 122 passed + 4 skipped (Stockfish), ~91% coverage (2026-11-21)
 cd app && npm install && npm run typecheck && npm test && npm run build
 # end-to-end (real app + real API + real Stockfish, driven through the UI in jsdom):
 chesstor serve --port 8123 &                              # then:
-cd app && CHESSTOR_E2E_URL=http://127.0.0.1:8123 npm test  # 33 tests incl. 2 e2e
+cd app && CHESSTOR_E2E_URL=http://127.0.0.1:8123 npm test  # 95 tests incl. 2 e2e (93 without a server). The PGN e2e needs Stockfish on the *server* (set CHESSTOR_STOCKFISH in the terminal that runs `chesstor serve`)
+# Windows PowerShell (point the app at the test server; do NOT set VITE_API_URL to "", PowerShell deletes the variable and .env wins):
+#   $env:VITE_API_URL="http://127.0.0.1:8123"; $env:CHESSTOR_E2E_URL="http://127.0.0.1:8123"; npm test
 ```
+**e2e and `app/.env`:** the e2e rewrites relative `/api` paths to `CHESSTOR_E2E_URL`. If your local (git-ignored) `app/.env` sets `VITE_API_URL`,
+requests go there instead and both e2e tests fail with "Cannot reach the Chesstor server" (BUG-021). Run the e2e with `VITE_API_URL` set to the test server
+(same URL as `CHESSTOR_E2E_URL`), or temporarily rename `app/.env`. In PowerShell `$env:VITE_API_URL=""` does **not** work: assigning an empty
+string removes the variable, so Vite falls back to `.env`.
+**Skipped tests:** the 4 pytest skips mean Stockfish was not found; install it (CI does) before quoting coverage or counts.
 On Windows set `CHESSTOR_STOCKFISH` to the full path of the Stockfish `.exe` if it is not on `PATH`.
 If `tests/test_overlay_geometry.py::test_committed_fixture_is_up_to_date` fails: `python scripts/gen_overlay_fixture.py`.
 
@@ -29,7 +36,10 @@ If `tests/test_overlay_geometry.py::test_committed_fixture_is_up_to_date` fails:
 | projection math + OpenCV reference | `app/src/overlay/projection.test.ts` | `fixtures/geometry.json` |
 | overlay component (64 dots, a1 corner per colour, degenerate input) | `app/src/overlay/Overlay.test.tsx` | jsdom |
 | UI flow vs real server | `app/src/e2e.test.tsx` | needs `CHESSTOR_E2E_URL` |
-| placeholders for later stages | `model.test.ts`, `arrowGeometry.test.ts` | `it.todo`, replace them |
+| overlay model + the gate (33), highlights/status render (8) | `app/src/overlay/model.test.ts`, `Stage2.test.tsx` | gate checked over every state x turn x analysis |
+| overlay arrows (10 geometry + 7 render) and eval chip (4) | `arrowGeometry.test.ts`, `Arrows.test.tsx`, `EvalChip.test.tsx` | Stage 3; no `it.todo` left |
+| tutor text from engine numbers | `tests/test_tutor.py` | 33 tests |
+| dataset loader/validator | `tests/test_dataset.py` | 21 tests |
 
 ## jsdom gotchas
 No layout and no `ResizeObserver`: stub `Element.prototype.getBoundingClientRect` and dispatch `window` `resize`.
