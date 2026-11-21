@@ -22,3 +22,6 @@ app/.env
 .venv/
 venv/
 env/
+
+# IDE
+.idea/
