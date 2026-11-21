@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, ApiError, type EngineLine, type Snapshot } from "./api";
+import { api, ApiError, type DetectResult, type EngineLine, type Snapshot } from "./api";
 import BoardView from "./Board";
 import Overlay from "./overlay/Overlay";
 import { demoCorners } from "./overlay/projection";
-import { contentRect, fmtEval, speakSan, tapToNormalised, type Color } from "./lib";
+import { contentRect, fmtEval, normalisedToPx, speakSan, tapToNormalised, type Color } from "./lib";
 import { Back, Icon, Pressable, Glass } from "./ui";
 
 type Phase = "starting" | "calibrate" | "running" | "error";
@@ -62,6 +62,8 @@ export default function LiveSession({
   const [taps, setTaps] = useState<{ px: [number, number]; n: [number, number] }[]>([]);
   const [busy, setBusy] = useState(false);
   const [grid, setGrid] = useState(false);
+  const [det, setDet] = useState<DetectResult | null>(null);
+  const tapsRef = useRef(taps);
   const videoRef = useRef<HTMLVideoElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const sidRef = useRef<string | null>(null);
@@ -148,6 +150,35 @@ export default function LiveSession({
     };
   }, [phase, simulated]);
 
+  // ---- live calibration help: outline the board (no taps yet) or judge the four taps (once placed) -----
+  useEffect(() => {
+    tapsRef.current = taps;
+  }, [taps]);
+
+  useEffect(() => {
+    if (phase !== "calibrate") return;
+    let stop = false;
+    (async () => {
+      while (!stop && aliveRef.current) {
+        const v = videoRef.current;
+        const sid = sidRef.current;
+        if (v?.videoWidth && sid) {
+          try {
+            const t = tapsRef.current;
+            const r = await api.detect(sid, await grabFrame(v), t.length === 4 ? t.map((x) => x.n) : undefined);
+            if (!stop) setDet(r);
+          } catch {
+            /* a missed poll is harmless: keep showing the last result */
+          }
+        }
+        await sleep(900);
+      }
+    })();
+    return () => {
+      stop = true;
+    };
+  }, [phase]);
+
   // ---- voice: speak the engine's best move once per new position, only on the user's turn -----------
   useEffect(() => {
     if (!voice || !snap || snap.analysis.status !== "ready" || snap.turn !== snap.color) return;
@@ -179,11 +210,23 @@ export default function LiveSession({
       setPhase("running");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-      setTaps([]);
     } finally {
       setBusy(false);
     }
   }, [taps]);
+
+  // only trust a result that matches what the user is doing now (4 taps -> "check", otherwise "detect")
+  const detNow = det && (taps.length === 4) === (det.mode === "check") ? det : null;
+
+  const useDetected = () => {
+    const box = boxRef.current;
+    const v = videoRef.current;
+    if (!detNow?.corners || !box || !v?.videoWidth) return;
+    const r = box.getBoundingClientRect();
+    const rect = contentRect(r.width, r.height, v.videoWidth, v.videoHeight);
+    setError(null);
+    setTaps(detNow.corners.map((n) => ({ px: normalisedToPx(n, rect), n })));
+  };
 
   const resync = async () => {
     if (!sidRef.current) return;
@@ -252,14 +295,45 @@ export default function LiveSession({
             <video ref={videoRef} className="live-video" playsInline muted autoPlay />
             {phase === "calibrate" && (
               <>
+                {detNow?.corners && (() => {
+                  const box = boxRef.current;
+                  const v = videoRef.current;
+                  if (!box || !v?.videoWidth) return null;
+                  const r = box.getBoundingClientRect();
+                  const rect = contentRect(r.width, r.height, v.videoWidth, v.videoHeight);
+                  const good = detNow.mode === "check" ? !!detNow.ready : !!detNow.found;
+                  return (
+                    <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+                      <polygon
+                        data-testid="detected-board"
+                        points={detNow.corners.map((n) => normalisedToPx(n, rect).join(",")).join(" ")}
+                        fill={good ? "rgba(52,211,153,0.12)" : "rgba(251,191,36,0.10)"}
+                        stroke={good ? "#34d399" : "#fbbf24"}
+                        strokeWidth={2.5}
+                        strokeDasharray={good ? undefined : "6 5"}
+                      />
+                    </svg>
+                  );
+                })()}
                 {taps.map((t, i) => (
                   <span key={i} className="corner-dot" style={{ left: t.px[0], top: t.px[1] }}>{i + 1}</span>
                 ))}
-                <div className="calib-hint glass">
-                  <strong>{taps.length < 4 ? `Tap board corner ${taps.length + 1} of 4` : "Corners set"}</strong>
-                  <span>Set up all 32 pieces first. Tap the four outer corners of the board, in any order.</span>
+                <div className="calib-hint glass" onPointerDown={(e) => e.stopPropagation()}>
+                  <strong>
+                    {taps.length < 4
+                      ? detNow?.found ? "Board found" : `Tap board corner ${taps.length + 1} of 4`
+                      : detNow?.ready ? "Ready to lock" : "Corners set"}
+                  </strong>
+                  <span>
+                    {detNow?.hints.length
+                      ? detNow.hints.slice(0, 2).join(" ")
+                      : "Set up all 32 pieces first. Tap the four outer corners of the board, in any order."}
+                  </span>
                   <div className="calib-actions">
-                    <Pressable className="mini-button" onClick={() => setTaps([])} disabled={!taps.length}>Reset</Pressable>
+                    <Pressable className="mini-button" onClick={() => { setTaps([]); setError(null); }} disabled={!taps.length}>Reset</Pressable>
+                    {taps.length < 4 && detNow?.found && (
+                      <Pressable className="mini-button confirm" onClick={useDetected}>Use detected board</Pressable>
+                    )}
                     <Pressable className="mini-button confirm" onClick={() => void confirmCalibration()} disabled={taps.length !== 4 || busy}>
                       {busy ? "Checking…" : "Lock board"}
                     </Pressable>

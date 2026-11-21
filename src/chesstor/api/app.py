@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .. import __version__
+from ..vision.detect import detect_report, diagnose
 from ..vision.frame import decode_image
 from .analysis import PgnError, analyse_game
 from .engine_service import ENGINE
@@ -71,6 +72,25 @@ def create_app(static_dir: str | None = None) -> FastAPI:
             pts = json.loads(corners)
             return s.calibrate(decode_image(await image.read()), pts)
         except (CalibrationError, ValueError, json.JSONDecodeError) as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @app.post("/api/sessions/{sid}/detect")
+    async def detect(sid: str, image: UploadFile = File(...), corners: str | None = Form(None)) -> dict:
+        """Live calibration help; never changes the session. Without `corners`: find the board in the frame.
+        With four tapped `corners`: say whether they would lock, and if not, why (plain-language hints)."""
+        _get(sid)
+        data = await image.read()
+        if len(data) > MAX_UPLOAD:
+            raise HTTPException(413, "frame too large")
+        try:
+            img = decode_image(data)
+            if corners:
+                pts = json.loads(corners)
+                if len(pts) != 4:
+                    raise ValueError("exactly four corners are required")
+                return diagnose(img, pts)
+            return detect_report(img)
+        except (ValueError, json.JSONDecodeError) as exc:
             raise HTTPException(422, str(exc)) from exc
 
     @app.post("/api/sessions/{sid}/frame")
