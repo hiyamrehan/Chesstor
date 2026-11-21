@@ -35,6 +35,30 @@ export interface BoardGeometry {
     white_side: "bottom" | "top" | "left" | "right";
   };
   frame: { width: number; height: number };
+  /** how the lock was decided; `refined` = the server snapped the taps onto the real board edge */
+  calibration?: { start_match: number; refined: boolean };
+}
+
+/** Live calibration help from the server (POST /detect). Never changes the session. */
+export interface DetectResult {
+  /** "detect": looked for a board with no taps. "check": judged the four tapped corners. */
+  mode: "detect" | "check";
+  found?: boolean;
+  /** detect mode, nothing board-like: a square-ish region was outlined for feedback only */
+  plain_area?: boolean;
+  method?: "pattern" | "silhouette";
+  confidence?: number;
+  /** check mode: these taps would lock the board right now */
+  ready?: boolean;
+  looks_like_board?: boolean;
+  /** check mode: how many of 64 squares match the starting position (60 needed) */
+  start_match?: number | null;
+  refined?: boolean;
+  square_px?: number;
+  /** Normalised 0..1 in the frame (TL, TR, BR, BL). Check mode: the taps, snapped to the board edge if that helped. */
+  corners?: [number, number][];
+  /** Plain-language next steps, most important first. */
+  hints: string[];
 }
 
 export interface Snapshot {
@@ -135,6 +159,12 @@ export const api = {
     f.append("image", frame, "frame.jpg");
     f.append("corners", JSON.stringify(corners));
     return request<Snapshot>(`/api/sessions/${id}/calibrate`, { method: "POST", body: f });
+  },
+  detect: (id: string, frame: Blob, corners?: [number, number][]) => {
+    const f = new FormData();
+    f.append("image", frame, "frame.jpg");
+    if (corners) f.append("corners", JSON.stringify(corners));
+    return request<DetectResult>(`/api/sessions/${id}/detect`, { method: "POST", body: f });
   },
   frame: (id: string, frame: Blob, t: number) => {
     const f = new FormData();
