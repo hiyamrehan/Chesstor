@@ -36,6 +36,10 @@ python scripts/results_to_latex.py results report/tables/results.tex
 | G 3% persistent errors | 0.06/93 | 0.30/18 | 0.66/8.4 | **0.70/5.1** | 0.76/1.7 |
 | H high frame error + mask miss | 0.10/106 | 0.47/47 | 0.76/11.8 | **1.00/0** | 1.00/0 |
 
+Note (P2-T6, 2026-11-21): B desync in condition B (1 game) is an under-promotion (`dxc8=N`, tracker assumes a queen), not a lighting effect; the F/G desyncs are wrong legal moves committed under
+persistent errors. The B4 vs B4-nomask gap in F/G is explained in `P2-T6_findings.md` (B4 commits while the hand is still on the board; the simulator's flickering hand flatters no-mask). Do not read it as
+"the mask hurts".
+
 Reading: temporal confirmation + legal constraints dominate when errors are independent; **persistent** errors (glare, a
 systematically confused square) are the open weakness (B4 misses the <= 1 false/100 target in F and G). Independent-noise
 simulation saturates (B4 = 100% even at 15% frame error); do not over-claim from it. Real-board data replaces it for final evidence.
