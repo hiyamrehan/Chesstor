@@ -1,0 +1,3 @@
+# Raw recordings never go into git (docs/DATA_PROTOCOL.md). Keep only this file.
+*
+!.gitignore
