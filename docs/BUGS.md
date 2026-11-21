@@ -20,8 +20,8 @@ minor; S4 idea/tech debt.
 | BUG-002 | S3 | BUG | FIXED (awaiting verification) | 0 | Madiha | Eval chip has no CSS; drawn under the status badge |
 | BUG-003 | S2 | BUG | FIXED (awaiting verification) | 0 | Huzaifa | Real-server e2e test (single `overlay-status`) fails because of BUG-001 |
 | BUG-004 | S1 | LIMIT | OPEN | 3-5 | Hiyam | B4 misses false-confirmation target (<=1/100) under persistent errors: 1.4 (F), 5.1 (G); acc 0.83 / 0.70 |
-| BUG-005 | S2 | RISK | OPEN | 2 | Hiyam | B4-nomask (ablation) beats B4 under persistent errors; unexplained (mask may hurt) |
-| BUG-006 | S2 | BUG | OPEN | 2 | Hiyam | One dim-light game (condition B) ended with a wrong final board; never analysed |
+| BUG-005 | S2 | RISK | OPEN (diagnosed, simulated only) | 2 | Hiyam | B4-nomask beats B4 under persistent errors: B4 commits while the hand is still on the board; mask is needed vs a realistic hand. See `docs/P2-T6_findings.md`. Fix proposal for P4-T7; real-data half pending |
+| BUG-006 | S2 | BUG | OPEN (diagnosed: duplicate of BUG-008) | 2 | Hiyam | One dim-light game (condition B) ended with a wrong final board: it is an under-promotion (`dxc8=N`, tracker assumes Q), same under normal/dim/glare. Not a lighting or tracking failure |
 | BUG-007 | S2 | LIMIT | OPEN | 4 | Huzaifa | `LOST_BOARD` has no vision trigger; overlay/tracking drift if camera moves after calibration |
 | BUG-008 | S3 | LIMIT | OPEN | 3 | Huzaifa | Under-promotion not distinguishable (occupancy+colour only; queen assumed) |
 | BUG-009 | S3 | LIMIT | OPEN | 6 | shared | Sessions in memory only; CORS defaults to `*` (dev) |
@@ -66,10 +66,18 @@ minor; S4 idea/tech debt.
   100 moves; target <= 1. Desync 0.11 and 0.30.
 - **Plan:** do not retune on held-out seeds. Study on real data first (Phase 2), then fix with dev data and re-freeze (Phase 7).
 
+### BUG-006 Condition B desync = under-promotion
+- **Diagnosed 2026-11-21 (P2-T6):** `--seed 201 --lighting dim`, game 9: 30/30 moves correct by from/to, 0 false confirmations, final board differs only on c8 (truth N, tracker Q) because of `dxc8=N`. Identical under normal, dim and glare. The other desyncs in F and G are wrong-legal-move commits under persistent errors (BUG-004), with no promotion involved.
+- **Open:** the harness's `move_accuracy` ignores the promotion piece while `desync` does not; decide how to score promotions (record before the P7-T1 freeze). Close together with BUG-008.
+
 ### BUG-005 No-mask ablation beats B4
 - **Data:** F: 0.847/0.0 vs 0.826/1.4; G: 0.757/1.7 vs 0.699/5.1.
-- **Hypotheses:** mask marks real piece squares as missing, which removes evidence; or mask-miss handling in candidate scoring
-  over-penalises. **Do not** report the mask as a win until explained.
+- **Original hypotheses (rejected):** mask removes real evidence; mask-miss handling over-penalises. Not supported.
+- **Diagnosed 2026-11-21 (P2-T6, simulated; `docs/P2-T6_findings.md`):** replicated on 80 + 144 new games (no-mask +2.3 / +2.7 points, CI excludes 0). Only the masking inside the temporal
+  aggregate matters. With the mask on, B4 commits while the hand is still on the board (34% of first commits in the retreat phase; 46 in the motion phase, 45 of them wrong; none without the mask). Forcing
+  B4 to wait until the window is fully visible (S5) removes all wrong commits (cost: ~0.3-0.7 s latency). The simulator's occluded squares flicker (averaged away); with a hand that keeps its colour,
+  no-mask loses 7 points (0.927 vs 1.000) and B4 stays perfect, so **the mask is needed**. Do not report the mask as a win or as harmful.
+- **Next:** P4-T7 tries a softer wait rule on dev data (S5 may never confirm on real boards if the mask over-flags, BUG-016), then re-freeze; real-data half after Phase 1.
 
 ### BUG-021 e2e bypassed by local `VITE_API_URL`
 - **Found:** 2026-11-21 by Hiyam during P0-T1 on Windows. `app/.env` (git-ignored) contains `VITE_API_URL=http://localhost:8000`.
