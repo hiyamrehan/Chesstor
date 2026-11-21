@@ -25,3 +25,6 @@ env/
 
 # IDE
 .idea/
+
+# Stockfish engine binary (GPL, ~100 MB): install it locally, never commit it
+stockfish/
