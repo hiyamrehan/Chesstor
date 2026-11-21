@@ -22,17 +22,26 @@ able to explain and modify the modules they own.
 \todo{Confirm the exact disclosure wording required by the FYP handbook.}
 \section{External Components and Dependencies}\label{sec:deps}
 \begin{longtable}{p{0.2\textwidth}p{0.3\textwidth}p{0.3\textwidth}}
-\toprule Component & Role & Licence (to verify)\\ \midrule
-python-chess & rules, legal moves, UCI & GPL-3.0 \todo{verify}\\
-Stockfish & engine (downstream, not a contribution) & GPL-3.0; review before distribution\\
-OpenCV & geometry, preprocessing & Apache-2.0 \todo{verify}\\
-NumPy, PyYAML & numerics, config & BSD / MIT \todo{verify}\\
-Roboflow Chess Pieces dataset & candidate training data (292 images) & \todo{check licence}\\
-Wölflein--Arandjelović dataset & candidate data & \todo{check licence}\\
-FastAPI, uvicorn, React, Vite, Tailwind, Capacitor & API and app & \todo{verify (MIT/BSD/Apache expected)}\\
-PyTorch & training (planned) & \todo{verify}\\
+\toprule Component & Role & Licence\\ \midrule
+python-chess & rules, legal moves, UCI & GPL-3.0-or-later (strong copyleft; see note below)\\
+Stockfish & engine (downstream, not a contribution) & GPL-3.0; the licence text and full source must accompany any distributed binary\\
+OpenCV (opencv-python-headless $\geq$ 4.8) & geometry, preprocessing & Apache-2.0 (OpenCV 4.5.0 and later; earlier versions were BSD-3-Clause)\\
+NumPy & numerics & BSD-3-Clause\\
+PyYAML & config & MIT\\
+FastAPI & HTTP API & MIT\\
+uvicorn & ASGI server & BSD-3-Clause\\
+python-multipart & file upload parsing & Apache-2.0\\
+React, Vite, Tailwind CSS & web app & MIT\\
+Capacitor & Android packaging & MIT\\
+Roboflow Chess Pieces dataset & candidate training data (292 images) & Public Domain as listed on Roboflow Universe\todo{confirm on the exact dataset page used}\\
+Wölflein--Arandjelović dataset & candidate data (synthetic renders) & \todo{paper is CC BY 4.0; confirm the dataset's own licence on its download page}\\
+PyTorch & training (planned) & BSD-3-Clause\\
 \bottomrule
 \end{longtable}
+\paragraph{Licence note.} python-chess and Stockfish are GPL-licensed. Chesstor imports python-chess, so if the project is
+distributed (for example as a release wheel or an app package) it must be released under a GPL-compatible licence, and the
+Stockfish source and licence text must ship with any Stockfish binary. Dataset licences are recorded per dataset and must be
+checked before any data is redistributed or used for training.
 \section{Risks and Mitigation}
 \begin{longtable}{p{0.3\textwidth}p{0.55\textwidth}}
 \toprule Risk & Mitigation\\ \midrule

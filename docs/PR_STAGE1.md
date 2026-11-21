@@ -11,7 +11,7 @@ screen recording of the `Grid` debug view on a real board for **both colours** (
 - [ ] CI green (ruff, pytest, `npm run typecheck`, `npm test`, build, e2e)
 - [ ] screenshot/recording attached (both colours; a1 gold dot on White's corner)
 - [ ] letterboxing checked on a real phone in portrait and landscape
-- [ ] note for the next person pasted below
+- [x] note for the next person pasted below
 
 **Note for the next person:** `<Overlay>` gives you a `Projection` (px) and calls your `buildOverlay(snapshot)`; draw in square coordinates only,
 put CSS in your section of `overlay.css`, and do not edit `Live.tsx`, `api.ts`, `types.ts` or `Overlay.tsx` (ask Huzaifa).
