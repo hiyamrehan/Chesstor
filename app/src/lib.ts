@@ -73,6 +73,11 @@ export function tapToNormalised(px: number, py: number, rect: { x: number; y: nu
   return x < 0 || x > 1 || y < 0 || y > 1 ? null : ([x, y] as [number, number]);
 }
 
+/** Inverse of tapToNormalised: normalised video coordinates -> px inside the container. */
+export function normalisedToPx(n: [number, number], rect: { x: number; y: number; w: number; h: number }) {
+  return [rect.x + n[0] * rect.w, rect.y + n[1] * rect.h] as [number, number];
+}
+
 /** Evaluation series (white-POV centipawns, clipped to +-600) -> SVG polyline path in a 310x112 box. */
 export function seriesPath(series: number[], w = 310, h = 112, clip = 600): { line: string; area: string; pts: [number, number][] } {
   const n = series.length;
