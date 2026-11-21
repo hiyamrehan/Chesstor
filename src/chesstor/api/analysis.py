@@ -58,7 +58,8 @@ def analyse_game(text: str, color: str = "white", time_ms: int = 120) -> dict:
     if not ENGINE.available:
         raise RuntimeError(ENGINE.error or "Stockfish unavailable")
     board = game.board()
-    moves = list(game.mainline_moves())[:MAX_PLIES]
+    all_moves = list(game.mainline_moves())
+    moves = all_moves[:MAX_PLIES]
 
     def best_of(b: chess.Board) -> tuple[int, str | None]:
         if b.is_game_over():
@@ -104,7 +105,8 @@ def analyse_game(text: str, color: str = "white", time_ms: int = 120) -> dict:
     headers = game.headers
     return {
         "headers": {k: headers.get(k, "") for k in ("White", "Black", "Result", "Date", "Event")},
-        "plies": len(rows), "color": color,
+        "plies": len(rows), "total_plies": len(all_moves), "truncated": len(all_moves) > len(moves),
+        "color": color,
         "summary": {"white": summary("white"), "black": summary("black")},
         "series_cp": [max(-600, min(600, c)) for c in series],
         "moves": rows,
