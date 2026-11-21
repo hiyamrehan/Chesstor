@@ -77,7 +77,11 @@ analysis & game\_id FK, ply, eval\_cp, mate\_in, best\_move, classification (bes
 session\_log & session\_id PK, game\_id FK, device, model\_version, config\_version, events\_json\\
 \bottomrule
 \end{longtable}
-\todo{Team to confirm the DBMS (e.g.\ SQLite on device; PostgreSQL or Firebase in cloud) and justify in one paragraph; draw the ERD.}
+\textbf{DBMS decision.} The guest store uses SQLite through the Python standard library: one local file per device, no
+server, no extra dependency and no licence issue (SQLite is in the public domain). It matches the privacy rule that only
+derived state (moves, FEN, engine numbers) is kept, and only after the person has agreed; nothing is written before
+consent, and one game or the whole history can be deleted at any time. A cloud database would be needed only for
+cross-device history, and would add the \texttt{user} table. \todo{Draw the ERD; team to confirm the decision.}
 
 \section{Process / Behavior Design}
 The session state machine (IDLE, CALIBRATING, INITIALIZING, TRACKING, TRANSITION, CONFIRMING, UNCERTAIN,
