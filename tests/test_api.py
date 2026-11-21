@@ -164,6 +164,18 @@ def test_pgn_review_flags_a_blunder():
     assert res["moves"][0]["fen_before"].startswith("rnbqkbnr/pppppppp")
 
 
+@pytest.mark.skipif(not HAS_SF, reason="stockfish not installed")
+def test_pgn_review_reports_truncation(monkeypatch):
+    from chesstor.api import analysis
+    monkeypatch.setattr(analysis, "MAX_PLIES", 4)
+    r = client.post("/api/analyze/pgn", data={"text": "1. e4 e5 2. Nf3 Nc6 3. Bb5 a6", "time_ms": "50"})
+    assert r.status_code == 200, r.text
+    res = r.json()
+    assert res["plies"] == 4 and res["total_plies"] == 6 and res["truncated"] is True
+    full = client.post("/api/analyze/pgn", data={"text": "1. e4 e5", "time_ms": "50"}).json()
+    assert full["truncated"] is False and full["total_plies"] == 2
+
+
 def test_pgn_endpoint_validation():
     assert client.post("/api/analyze/pgn", data={"text": "   "}).status_code == 422
     assert client.post("/api/analyze/pgn", data={"text": "not a pgn"}).status_code in (422, 503)

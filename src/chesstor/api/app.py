@@ -10,6 +10,7 @@ from pathlib import Path
 
 import chess
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -113,7 +114,8 @@ def create_app(static_dir: str | None = None) -> FastAPI:
         if not raw.strip():
             raise HTTPException(422, "no PGN provided")
         try:
-            return analyse_game(raw, color, max(30, min(time_ms, 1000)))
+            # Heavy and blocking: run it off the event loop so live sessions keep responding meanwhile.
+            return await run_in_threadpool(analyse_game, raw, color, max(30, min(time_ms, 1000)))
         except PgnError as exc:
             raise HTTPException(422, str(exc)) from exc
         except RuntimeError as exc:
