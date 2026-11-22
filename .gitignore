@@ -25,3 +25,8 @@ env/
 
 # IDE
 .idea/
+
+stockfish/
+frame.png
+debug.png
+CHANGES_FOR_CLAUDE.txt
