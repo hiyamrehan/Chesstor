@@ -13,6 +13,7 @@ from ..config import TrackerConfig
 from ..observation import ObservationFrame
 from ..simulate import SimConfig, SimFrame, simulate_game
 from ..tracker import State, Tracker
+from ..vision.detect import PASS_MARK, diagnose, explain_failure, refine_corners
 from ..vision.frame import occlusion_mask, quality_score
 from ..vision.geometry import BOARD_CORNER_ORDER, homography, order_corners, rectify, white_side
 from ..vision.occupancy import OccupancyModel
@@ -74,17 +75,10 @@ class LiveSession:
             self._request_analysis()
 
     # ---- camera path ---------------------------------------------------------------------------
-    def calibrate(self, img: np.ndarray, corners_norm: list[list[float]]) -> dict:
-        """Manual four-corner calibration (spec s.8 POC strategy). Board orientation is detected by trying
-        all four rotations and keeping the one in which the standard starting position is recognised."""
-        if self.simulated:
-            raise CalibrationError("simulated session needs no calibration")
-        if len(corners_norm) != 4:
-            raise CalibrationError("exactly four corners are required")
-        h, w = img.shape[:2]
-        pts = np.asarray(corners_norm, dtype=np.float32) * np.array([w, h], dtype=np.float32)
-        ordered = order_corners(pts)
-        best: tuple[int, np.ndarray, OccupancyModel, int, np.ndarray] | None = None
+    @staticmethod
+    def _best_rotation(img: np.ndarray, ordered: np.ndarray):
+        """Try the 4 rotations of the corners; best is (score, H, model, k, corners), or None."""
+        best = None
         for k in range(4):
             c = np.roll(ordered, -k, axis=0)
             H = homography(c, reorder=False)
@@ -96,11 +90,29 @@ class LiveSession:
             score = model.start_position_matches(canon)
             if best is None or score > best[0]:
                 best = (score, H, model, k, c)
-        if best is None or best[0] < 60:
-            raise CalibrationError("Could not recognise the starting position. Set up all 32 pieces, "
-                                   "make sure the board is fully visible and tap its four outer corners.")
+        return best
+
+    def calibrate(self, img: np.ndarray, corners_norm: list[list[float]]) -> dict:
+        """Manual four-corner calibration (spec s.8 POC strategy). Board orientation is detected by trying
+        all four rotations and keeping the one in which the standard starting position is recognised."""
+        if self.simulated:
+            raise CalibrationError("simulated session needs no calibration")
+        if len(corners_norm) != 4:
+            raise CalibrationError("exactly four corners are required")
+        h, w = img.shape[:2]
+        pts = np.asarray(corners_norm, dtype=np.float32) * np.array([w, h], dtype=np.float32)
+        ordered = order_corners(pts)
+        best = self._best_rotation(img, ordered)
+        refined = False
+        if best is None or best[0] < PASS_MARK:
+            # taps are rarely exact: snap them onto the board edge; keep that only if it scores better
+            alt = self._best_rotation(img, order_corners(refine_corners(img, ordered)))
+            if alt is not None and (best is None or alt[0] > best[0]):
+                best, refined = alt, True
+        if best is None or best[0] < PASS_MARK:
+            raise CalibrationError(explain_failure(diagnose(img, corners_norm)))
         with self.lock:
-            _, self.H, self.model, k, c = best
+            score, self.H, self.model, k, c = best
             # `c` is the winning rotation of the tapped corners, in canonical order a8, h8, h1, a1
             # (pixel -> normalised again so the app can project squares onto its own video element).
             norm = (c / np.array([w, h], dtype=np.float32)).astype(float)
@@ -109,6 +121,7 @@ class LiveSession:
                 "order": list(BOARD_CORNER_ORDER),
                 "orientation": {"rotation": int(k), "white_side": white_side(norm)},
                 "frame": {"width": int(w), "height": int(h)},
+                "calibration": {"start_match": int(score), "refined": refined},
             }
             if self.tracker.state == State.IDLE:
                 self.tracker.start()
