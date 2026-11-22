@@ -8,7 +8,6 @@ start-position check, pass mark 60/64) and writes a picture of what the classifi
 2) open frame.png in any viewer that shows pixel coordinates (Paint works), note the four OUTER corners of the
    8x8 playing area (not the frame or the coordinate labels), then:
        python scripts/calib_debug.py --image frame.png --corners "x1,y1 x2,y2 x3,y3 x4,y4" --out debug.png
-   (or, with no taps at all, let the app's board detector try:   --image frame.png --auto --out debug.png)
 Do not commit frame.png / debug.png if they show people.
 """
 from __future__ import annotations
@@ -20,7 +19,6 @@ import cv2
 import numpy as np
 
 from chesstor.observation import label_map
-from chesstor.vision.detect import detect_board
 from chesstor.vision.geometry import homography, order_corners, rectify
 from chesstor.vision.occupancy import OccupancyModel
 
@@ -57,18 +55,13 @@ def draw(canon: np.ndarray, title: str) -> np.ndarray:
 
 
 def grid_text(pred: np.ndarray, expected: np.ndarray) -> str:
-    """Rank 8 on top. W/B = piece read correctly, . = empty read correctly.
-    m = piece NOT seen (read as empty), p = phantom (empty square read as occupied), x = wrong colour."""
     lines = []
-    for rank in range(7, -1, -1):
+    for rank in range(7, -1, -1):            # rank 8 at the top, white at the bottom
         cells = []
         for file in range(8):
             sq = rank * 8 + file
             got, want = int(pred[sq].argmax()), int(expected[sq])
-            if got == want:
-                cells.append(NAMES[got])
-            else:
-                cells.append("m" if want and not got else "p" if got and not want else "x")
+            cells.append(NAMES[got] if got == want else NAMES[got].lower() + "!" if got else "?!")
         lines.append(f"{rank + 1}  " + " ".join(f"{c:>2}" for c in cells))
     return "\n".join(lines) + "\n   " + " ".join(f"{f:>2}" for f in "abcdefgh")
 
@@ -78,7 +71,6 @@ def main() -> None:
     ap.add_argument("--camera", type=int, help="grab one frame from this camera index and save it to --out")
     ap.add_argument("--image")
     ap.add_argument("--corners", help='four "x,y" pixel pairs, e.g. "310,90 905,100 930,640 280,630"')
-    ap.add_argument("--auto", action="store_true", help="no taps: let the board detector find the corners")
     ap.add_argument("--out", default="debug.png")
     a = ap.parse_args()
 
@@ -94,21 +86,11 @@ def main() -> None:
         return
 
     img = cv2.imread(a.image)
-    if img is None:
-        raise SystemExit("need --image (see the docstring)")
-    if a.auto or not a.corners:
-        det = detect_board(img)
-        if det is None:
-            cv2.imwrite(a.out, img)
-            raise SystemExit("AUTO-DETECT: no board found. Fill the view with the whole board (all four "
-                             "corners visible), look from above, reduce glare, then try again.")
-        pts = det.corners
-        print(f"AUTO-DETECT: board found via '{det.method}' (confidence {det.confidence:.2f}); corners (px): "
-              + " ".join(f"{x:.0f},{y:.0f}" for x, y in pts))
-    else:
-        pts = np.array([[float(v) for v in p.split(",")] for p in a.corners.split()], dtype=np.float32)
-        if pts.shape != (4, 2):
-            raise SystemExit("--corners needs exactly four x,y pairs")
+    if img is None or not a.corners:
+        raise SystemExit("need --image and --corners (see the docstring)")
+    pts = np.array([[float(v) for v in p.split(",")] for p in a.corners.split()], dtype=np.float32)
+    if pts.shape != (4, 2):
+        raise SystemExit("--corners needs exactly four x,y pairs")
 
     rows, expected = analyse(img, pts)
     h, w = img.shape[:2]
@@ -139,7 +121,7 @@ def main() -> None:
     k, score, _c, pred, _e = best
     verdict = "PASS" if score >= PASS_MARK else "FAIL"
     print(f"\nbest rotation {k}: {score}/64 (pass mark {PASS_MARK}) -> {verdict}")
-    print("grid as classified (W/B/. correct; m = piece not seen, p = phantom piece, x = wrong colour):")
+    print("grid as classified (W/B/. correct; lower-case + ! = wrong, ?! = wrong empty); rank 8 at the top:")
     print(grid_text(pred, expected))
     print("\nHow to read it: if the red grid in the bottom pictures does not sit on the squares, the")
     print("corners are wrong (use the outer edge of the 8x8 area). If the grid fits but labels are wrong,")

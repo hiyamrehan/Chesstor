@@ -13,8 +13,9 @@
 | 10 | Tone-agnostic occlusion mask (border-ring colour deviation) | skin-colour fails on wooden boards, biased across skin tones (DEI) | learned hand segmentation later; untested on real hands |
 | 11 | Frontend = the team's React POC + Capacitor (not Flutter) | avoids a rewrite; POC exists | **confirm with supervisor** (proposal said Flutter) |
 | 12 | Core runs on a server/laptop; phone uploads frames | fastest path to a live demo (spec stage B) | on-device only after profiling; state honestly |
-| 13 | Guest mode default; optional sign-in; schema drafted | committee asked to justify login | DBMS undecided |
+| 13 | Guest mode default; optional sign-in; schema drafted | committee asked to justify login | DBMS decided in #18 |
 | 14 | Review text is templated from engine numbers | "LLM never determines truth" | an LLM may paraphrase later |
 | 15 | Overlay split in 3 stages by file ownership; shapes in square coordinates; one gate `suggestionsAllowed` | no merge conflicts; geometry mistakes impossible to repeat per stage | `docs/OVERLAY.md` |
 | 16 | API returns board corners in fixed order **[a8,h8,h1,a1]** + `white_side` | app needs rotation the server discovered; one canonical order | |
 | 17 | TS projection validated against an OpenCV fixture (<= 0.1 px) | two implementations cross-check each other | regenerate with `scripts/gen_overlay_fixture.py` |
+| 18 | DBMS = SQLite (Python standard library), one local file per device; no server | guest mode needs on-device storage and no account; zero extra dependency or licence (SQLite is public domain); easy to test; fits "only derived state, only with consent" | PostgreSQL/Firebase only if cloud sync is ever needed (then add the `user` table); decided by Madiha, **confirm with team** |
