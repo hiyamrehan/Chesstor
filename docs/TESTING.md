@@ -40,6 +40,7 @@ If `tests/test_overlay_geometry.py::test_committed_fixture_is_up_to_date` fails:
 | overlay arrows (10 geometry + 7 render) and eval chip (4) | `arrowGeometry.test.ts`, `Arrows.test.tsx`, `EvalChip.test.tsx` | Stage 3; no `it.todo` left |
 | tutor text from engine numbers | `tests/test_tutor.py` | 33 tests |
 | dataset loader/validator | `tests/test_dataset.py` | 21 tests |
+| replay harness (live-path commits, fps thinning, mp4, sealed guard, CLI) | `tests/test_replay.py` | 13 tests; synthetic recordings only, see `docs/REPLAY.md` |
 
 ## jsdom gotchas
 No layout and no `ResizeObserver`: stub `Element.prototype.getBoundingClientRect` and dispatch `window` `resize`.
