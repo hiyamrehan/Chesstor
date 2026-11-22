@@ -20,22 +20,23 @@ minor; S4 idea/tech debt.
 | BUG-002 | S3 | BUG | FIXED (awaiting verification) | 0 | Madiha | Eval chip has no CSS; drawn under the status badge |
 | BUG-003 | S2 | BUG | FIXED (awaiting verification) | 0 | Huzaifa | Real-server e2e test (single `overlay-status`) fails because of BUG-001 |
 | BUG-004 | S1 | LIMIT | OPEN | 3-5 | Hiyam | B4 misses false-confirmation target (<=1/100) under persistent errors: 1.4 (F), 5.1 (G); acc 0.83 / 0.70 |
-| BUG-005 | S2 | RISK | OPEN | 2 | Hiyam | B4-nomask (ablation) beats B4 under persistent errors; unexplained (mask may hurt) |
-| BUG-006 | S2 | BUG | OPEN | 2 | Hiyam | One dim-light game (condition B) ended with a wrong final board; never analysed |
+| BUG-005 | S2 | RISK | OPEN (diagnosed, simulated only) | 2 | Hiyam | B4-nomask beats B4 under persistent errors: B4 commits while the hand is still on the board; mask is needed vs a realistic hand. See `docs/P2-T6_findings.md`. Fix proposal for P4-T7; real-data half pending |
+| BUG-006 | S2 | BUG | OPEN (diagnosed: duplicate of BUG-008) | 2 | Hiyam | One dim-light game (condition B) ended with a wrong final board: it is an under-promotion (`dxc8=N`, tracker assumes Q), same under normal/dim/glare. Not a lighting or tracking failure |
 | BUG-007 | S2 | LIMIT | OPEN | 4 | Huzaifa | `LOST_BOARD` has no vision trigger; overlay/tracking drift if camera moves after calibration |
 | BUG-008 | S3 | LIMIT | OPEN | 3 | Huzaifa | Under-promotion not distinguishable (occupancy+colour only; queen assumed) |
 | BUG-009 | S3 | LIMIT | OPEN | 6 | shared | Sessions in memory only; CORS defaults to `*` (dev) |
 | BUG-010 | S3 | LIMIT | OPEN | 6 | Madiha | PGN review is synchronous; long games take tens of seconds; no job queue |
-| BUG-011 | S3 | DOC | OPEN | 0 | all | `CONTEXT.md`, `ROADMAP.md`, `TESTING.md` say Stage 3 is stubs / `it.todo`; stale |
+| BUG-011 | S3 | DOC | FIXED (awaiting verification) | 0 | all | `CONTEXT.md`, `HANDOFF.md`, `TESTING.md`, `OVERLAY.md`, `KNOWN_ISSUES.md` said Stage 3 is stubs / `it.todo`; refreshed in P0-T4 |
 | BUG-012 | S4 | PROC | FIXED (awaiting verification) | 0 | all | `patches/` leftover and `.idea/` committed |
-| BUG-013 | S3 | DOC | OPEN | 0 | all | Test counts disagree (HANDOFF 72+4 todo, report 93, rough count ~82). Measured 2026-11-16 (see SESSION_LOG): pytest 71, vitest 93 + 2 e2e = 95, no `it.todo`. Docs/report still to be updated |
+| BUG-013 | S3 | DOC | FIXED (awaiting verification) | 0 | all | Test counts disagree (HANDOFF 72+4 todo, report 93, rough count ~82). Measured 2026-11-16 (see SESSION_LOG): pytest 71, vitest 93 + 2 e2e = 95, no `it.todo`. Docs refreshed in P0-T4 with the 2026-11-21 measurement (pytest 122 + 4 skipped, vitest 93 + 2 e2e); the **report** still quotes 93 and must be updated |
 | BUG-014 | S1 | RISK | OPEN | 0 | Huzaifa | Overlay letterboxing, portrait/landscape, `getUserMedia` in WebView never run on a real phone |
 | BUG-015 | S1 | RISK | OPEN | 2 | Huzaifa | Classical classifier untrained; behaviour on real boards (glass, similar colours, glare) unknown |
 | BUG-016 | S2 | RISK | OPEN | 2 | Huzaifa | Occlusion mask untested on real hands/sleeves; tall pieces may overhang neighbours and be flagged |
 | BUG-017 | S3 | LIMIT | OPEN | 5 | shared | Phone browsers need HTTPS for the camera; only the Capacitor app is expected to work |
-| BUG-018 | S3 | DOC | OPEN | 0 | all | Report claims/todos: 34 `\todo{}` left; "37" quoted in places |
+| BUG-018 | S3 | DOC | OPEN | 0 | all | Report claims/todos: 32 `\todo{}` markers counted on 2026-11-21 (34 and 37 quoted elsewhere) |
 | BUG-019 | S2 | LIMIT | OPEN | 6 | Madiha | Video analysis returns 501; Analytics/Profile show sample data; no accounts/DB |
 | BUG-020 | S3 | LIMIT | OPEN | 4 | Hiyam | Assumes standard start position and white at the bottom of the rectified board; no mid-game join |
+| BUG-021 | S3 | BUG | OPEN | 0 | Huzaifa (test) / Hiyam (found) | e2e fails with "Cannot reach the Chesstor server" when a local `app/.env` sets `VITE_API_URL`; CI is unaffected |
 
 ## Details (first entries; extend as bugs are worked)
 
@@ -51,7 +52,7 @@ minor; S4 idea/tech debt.
   `<p className="tracking-label">` from `Live.tsx`. `.tracking-label` rules in `index.css` (frozen file, ~l.199-200) are now dead CSS; left for the owner to delete.
 - **Regression test:** `e2e.test.tsx` now asserts exactly one `overlay-status` and no `.tracking-label`. Test was *strengthened*, not weakened.
   Checked: with the old `Live.tsx` restored the guest e2e test fails; with the fix both e2e tests pass.
-- **Verified by / where:** simulated demo feed in jsdom against a real server + Stockfish 16 only. **Not verified on a real phone**; close only after P0-T6/T7 re-check (DoD).
+- **Verified by / where:** simulated demo feed in jsdom against a real server + Stockfish 16 (Linux sandbox, 16 Nov) and again by Hiyam on Windows (21 Nov, 95/95). **Not verified on a real phone**; close only after P0-T6/T7 re-check (DoD).
 
 ### BUG-002 Eval chip placement
 - **Found:** Figure 6.2(a) screenshot. `EvalChip.tsx` renders `<div className="ov-eval-chip" data-testid="eval-chip">` with inline
@@ -65,10 +66,32 @@ minor; S4 idea/tech debt.
   100 moves; target <= 1. Desync 0.11 and 0.30.
 - **Plan:** do not retune on held-out seeds. Study on real data first (Phase 2), then fix with dev data and re-freeze (Phase 7).
 
+### BUG-006 Condition B desync = under-promotion
+- **Diagnosed 2026-11-21 (P2-T6):** `--seed 201 --lighting dim`, game 9: 30/30 moves correct by from/to, 0 false confirmations, final board differs only on c8 (truth N, tracker Q) because of `dxc8=N`. Identical under normal, dim and glare. The other desyncs in F and G are wrong-legal-move commits under persistent errors (BUG-004), with no promotion involved.
+- **Open:** the harness's `move_accuracy` ignores the promotion piece while `desync` does not; decide how to score promotions (record before the P7-T1 freeze). Close together with BUG-008.
+
 ### BUG-005 No-mask ablation beats B4
 - **Data:** F: 0.847/0.0 vs 0.826/1.4; G: 0.757/1.7 vs 0.699/5.1.
-- **Hypotheses:** mask marks real piece squares as missing, which removes evidence; or mask-miss handling in candidate scoring
-  over-penalises. **Do not** report the mask as a win until explained.
+- **Original hypotheses (rejected):** mask removes real evidence; mask-miss handling over-penalises. Not supported.
+- **Diagnosed 2026-11-21 (P2-T6, simulated; `docs/P2-T6_findings.md`):** replicated on 80 + 144 new games (no-mask +2.3 / +2.7 points, CI excludes 0). Only the masking inside the temporal
+  aggregate matters. With the mask on, B4 commits while the hand is still on the board (34% of first commits in the retreat phase; 46 in the motion phase, 45 of them wrong; none without the mask). Forcing
+  B4 to wait until the window is fully visible (S5) removes all wrong commits (cost: ~0.3-0.7 s latency). The simulator's occluded squares flicker (averaged away); with a hand that keeps its colour,
+  no-mask loses 7 points (0.927 vs 1.000) and B4 stays perfect, so **the mask is needed**. Do not report the mask as a win or as harmful.
+- **Next:** P4-T7 tries a softer wait rule on dev data (S5 may never confirm on real boards if the mask over-flags, BUG-016), then re-freeze; real-data half after Phase 1.
+
+### BUG-021 e2e bypassed by local `VITE_API_URL`
+- **Found:** 2026-11-21 by Hiyam during P0-T1 on Windows. `app/.env` (git-ignored) contains `VITE_API_URL=http://localhost:8000`.
+- **Root cause:** `api.ts` builds `API_BASE` from `VITE_API_URL`; `e2e.test.tsx` only rewrites fetches whose URL starts with `/api`, so with a non-empty
+  base the app calls `http://localhost:8000/...` (nothing listening) and shows "Cannot reach the Chesstor server".
+- **Reproduced:** sandbox with that `.env`: both e2e fail; with `VITE_API_URL` pointing at the test server the guest e2e passes. The PGN e2e needs Stockfish
+  (the sandbox has none, so that one was not seen passing).
+- **Workaround:** run the e2e with `VITE_API_URL` set to the test server, e.g. `VITE_API_URL=http://127.0.0.1:8123` (checked in a sandbox with the
+  bad `.env` present: guest e2e passes). **`$env:VITE_API_URL=""` in PowerShell does not work** (it deletes the variable, `.env` wins again; confirmed
+  on 2026-11-21, both e2e still failed on Windows). Or rename `app/.env` while testing.
+- **Fix plan (not done; `e2e.test.tsx` is Huzaifa's, ask first):** also rewrite URLs that start with `API_BASE`, or set `import.meta.env.VITE_API_URL=""`
+  via `vitest` `test.env` in `vite.config.ts`. Add a note to `app/.env.example`.
+- **Verify:** with the local `.env` present and Stockfish installed, `CHESSTOR_E2E_URL=... npm test` shows 95 passed. **Status 2026-11-21: workaround confirmed on Windows
+  (95 of 95 pass with the server using Stockfish).** The test itself is still not fixed, so the bug stays OPEN for Huzaifa.
 
 ### BUG-014 Real-phone overlay unverified
 - Checklist lives in `docs/phases/PHASE_00_cleanup_and_smoke_test.md` (P0-T6..P0-T8).

@@ -1,56 +1,56 @@
-# HANDOFF: state after overlay Stage 2 (Stage 3 is next)
+# HANDOFF: state after P0-T4 (overlay Stages 1-3 done; real-device work is next)
 
 > Written for the next person or LLM. Read `CONTEXT.md` first for the project; this file is "where we are and
-> what to do next". Update it at the end of every task.
+> what to do next". Update it at the end of every task. Work plan: `WORK_DIVISION.md` and `docs/phases/`.
 
 ## 0. Repo housekeeping
-- The base mismatch from Stage 1 is **resolved**: `api/` and `app/` are in this repo. The `patches/` folder is a leftover
-  from that and can be deleted (`git rm -r patches`).
-- Stage 1 (geometry, Huzaifa) and Stage 2 (state logic, Hiyam) are both merged. **Stage 3 (arrows + eval chip, Madiha) is the only
-  overlay stage left.** `.idea/` (JetBrains) is committed; consider adding it to `.gitignore`.
+- Resolved: the `api/`+`app/` base mismatch, `patches/` (gone), `.idea/` (in `.gitignore`).
+- Still to tidy (P0-T5 / P9-T7): `app/.env` is git-ignored but **overrides the e2e target** (BUG-021); stray root-level `src/Live.tsx` and
+  `src/e2e.test.tsx` (byte-identical copies of the `app/src/` files, delete them); untracked `frame.png`, `overlay_geometry.png`,
+  `scripts/calib_debug.py`, `CHANGES_FOR_CLAUDE.txt`: commit or delete.
 
 ## 1. Overlay status
 | Stage | Owner | State |
 |---|---|---|
 | 1 geometry: `types.ts`, `projection.ts`, `Overlay.tsx`, API `snapshot.board` | Huzaifa | **done**, verified in tests; **not yet seen on a real camera/phone** |
 | 2 state logic: `model.ts` (`buildOverlay`, the gate), `Highlights.tsx`, `Status.tsx`, `overlay.css` section | Hiyam | **done**, 33 model tests + 8 render tests; **styling not yet seen on a physical phone** |
-| 3 arrows: `arrowGeometry.ts`, `Arrows.tsx`, `EvalChip.tsx` | Madiha | stubs only (4 `it.todo`) |
+| 3 arrows: `arrowGeometry.ts`, `Arrows.tsx`, `EvalChip.tsx` | Madiha | **done** (10 + 7 + 4 tests); BUG-002 (chip CSS) fixed, **awaiting check on a phone** |
 
-What Stage 2 gives Stage 3 (read `docs/OVERLAY.md` "Stage 2 handoff note"): `model.arrows` (top 3 lines, engine rank, `from/to/uci/san/piece/tone`,
-**empty whenever the gate is closed**), `model.evalChip` (user's point of view), `model.suggestionsAllowed`. Check only the gate; do not re-derive state or turn.
-Render `<EvalChip model={model} />` at the marked comment in `Status.tsx`.
+Contract for anyone touching the overlay: draw only when `model.suggestionsAllowed`; do not re-derive state or turn; do not edit
+`Live.tsx`, `api.ts`, `types.ts`, `Overlay.tsx` or `model.ts` without asking the owner. `Live.tsx` has had one edit since Stage 1 (BUG-001: the
+legacy `tracking-label` was removed, the overlay badge is the single status display).
 
-### Integration fix made at this checkpoint (Huzaifa, `Live.tsx`)
-The real-server e2e found the tracker status shown **twice**: Stage 2's overlay badge and the old `tracking-label` in `Live.tsx`. The legacy label (and its
-`STATE_TONE`/`tone` helpers) was removed; the overlay badge is the single status display. `e2e.test.tsx` now asserts exactly one `overlay-status`
-after the overlay has layout. This is the only edit to the otherwise-frozen `Live.tsx` since Stage 1. Lesson: unit tests passed everywhere; only the
-end-to-end test against the real server caught it. Keep running it.
+## 2. Verification at this checkpoint (measured 2026-11-21, Windows, Python 3.11.9, Node 22, `main` at the time of P0-T1)
+- `ruff check .`: clean.
+- `pytest --cov=chesstor --cov-fail-under=85`: **122 passed, 4 skipped**, coverage **90.93%** (110 s). The 4 skips are the Stockfish tests
+  (3 in `test_api.py`, 1 in `test_evaluate_and_cli.py`); Stockfish was **not on PATH** on this machine, which is also why `engine.py` (52%) and
+  `api/analysis.py` (28%) look under-covered here. CI installs Stockfish and covers them.
+- Regression gate `chesstor evaluate --scenario special --games 12 --seed 103` then `scripts/check_regression.py`: **PASS** (B4 1.000 / 0.0 false
+  confirmations; B1 0.125; B2 0.854; B3 0.802; B4-nomask 1.000).
+- `npm run typecheck` / `npm run build`: ok. `npm test` without a server: **93 passed, 2 skipped** (the e2e).
+- **e2e with a live server (4 attempts, 2026-11-21):** (1) plain: both failed, "Cannot reach the Chesstor server"; (2) `$env:VITE_API_URL=""`: same
+  (PowerShell deletes a variable set to an empty string, so `app/.env` still applied); (3) `$env:VITE_API_URL="http://127.0.0.1:8123"`: 94 passed,
+  1 failed (PGN e2e: server had no Stockfish); (4) server restarted with Stockfish: **9 files, 95 passed, 95 total (18.2 s)**. Cause of 1-2 = local
+  `app/.env` (`VITE_API_URL=http://localhost:8000`) bypassing the test's `/api` rewrite (BUG-021); CI has no `.env`. The e2e now confirms BUG-001/003
+  against the real server and Stockfish, but **only in jsdom, not on a phone** (BUG-014), so they stay "awaiting verification" until P0-T6/T7.
+- Not re-measured after Stockfish was installed: pytest (the 4 Stockfish tests were skipped in the 2026-11-21 run; expect 126 passed) and coverage.
+- Earlier evidence (not re-measured): TS projection matches OpenCV within 0.1 px; highlights land on the right squares for White and Black.
 
-## 2. Verification at this checkpoint (run on this exact repo state)
-- `ruff check .` clean; `pytest`: **71 passed**, 95% coverage (gate 85%).
-- `npm run typecheck` clean; `npm test`: **72 passed + 4 todo**; with a live server (`CHESSTOR_E2E_URL=...`) **74 passed** (adds the 2 e2e).
-- `npm run build` ok.
-- Stage 1 evidence: corners land on the right pixels for 4 camera rotations; TS projection matches OpenCV within 0.1 px.
-- Stage 2 evidence: gate tested over every state x turn x analysis combination; highlights land on the right squares for White and Black.
-
-## 3. NOT verified (the real "done when" for Stages 1 and 2)
-- **No browser or phone run, no screenshots.** Needed: Grid debug view on a real board for both colours (`docs/OVERLAY.md`, last section of Stage 1) and the
-  Stage 2 demo-feed walkthrough. Attach to the PRs.
-- Letterboxing on a real phone (portrait/landscape) is the most likely thing to need adjusting.
-- Stage 2 on the demo feed puts the badge over the board's top-left and the paused banner over the bottom of the 300 px board wrapper; check it looks right.
+## 3. NOT verified
+- **No browser or phone run, no screenshots** (P0-T6..T8). Needed: Grid debug view on a real board for both colours (`docs/OVERLAY.md`) and the
+  demo-feed walkthrough. Attach to the PRs.
+- Letterboxing on a real phone (portrait/landscape) is the most likely thing to need adjusting; Stage 3 arrows and the eval chip are untested on a phone.
 - Overlay drift if the camera moves after calibration (no re-detection; `LOST_BOARD` has no vision trigger).
 - Android build and `getUserMedia` in the WebView are untested.
+- Everything on a real board (see `CONTEXT.md` section 6).
 
 ## 4. Next steps, in order
-1. **Madiha, Stage 3** (`overlay/3-arrows`): `arrowGeometry.ts` (straight, knight L, castling both wings, promotion; pure pixel functions from `Projection`), `Arrows.tsx`
-   (draw nothing unless `model.suggestionsAllowed`), `EvalChip.tsx` rendered from `Status.tsx`, tests replacing the 4 `it.todo`, her section of `overlay.css`.
-2. **Everyone:** capture the real-board screenshots/recordings for the Stage 1 and Stage 2 PRs and tick the checklist in `docs/PR_STAGE1.md`.
-3. Then `docs/ROADMAP.md`: **real-board data collection is the biggest outstanding risk and should start now**; then the real-data baseline, a learned
-   recogniser, automatic board detection, phone profiling, video analysis, data layer.
-4. Report: 37 `\todo{}` markers remain (`grep -rn 'todo{' report/chapters`); add Stage 1-3 contributions per member with commit hashes.
-
-**One-line note for Stage 3:** *"`model.arrows` is ready and already gated; draw it with `Projection` pixels; put CSS in your section of `overlay.css`; do not edit
-`Live.tsx`, `api.ts`, `types.ts`, `Overlay.tsx` or `model.ts` (ask the owner)."*
+1. **Hiyam:** re-run pytest with Stockfish set to clear the 4 skips and update the pytest/coverage line in section 2 (optional); fill in section 2; log in `docs/SESSION_LOG.md`.
+2. **Huzaifa (P0-T6/T7), Madiha (P0-T7):** the real-phone run and overlay check; then BUG-001/002/003/014 can close. **Hiyam (P0-T8):** one full real game.
+3. **Madiha (P0-T10):** confirm React + Capacitor vs Flutter with the supervisor in writing.
+4. Then Phase 1 real-data collection (the biggest outstanding risk), then the real-data baseline (P2), learned recogniser, automatic board
+   detection, phone profiling, video analysis, data layer: see `docs/ROADMAP.md` and `WORK_DIVISION.md`.
+5. Report: 32 `\todo{}` markers remain (`grep -rno 'todo{' report/chapters | wc -l`); each member fills their own (P0-T9).
 
 ## 5. Pitfalls already hit (do not repeat)
 - A stability window longer than N frames at the camera FPS never confirms (0.5 s vs 8 frames @15 fps). Derive windows
@@ -77,5 +77,5 @@ end-to-end test against the real server caught it. Keep running it.
 - On-device inference vs laptop/server: currently the **core runs on the server**; state this honestly in the report.
 
 ## 7. Report status
-`report/` compiles (72 pages) but has **37 `\todo{}` markers** (contribution per member, repo evidence, diagrams, Gantt,
-literature verification, licences, DBMS decision, AI-use disclosure wording). `grep -rn 'todo{' report/chapters`.
+`report/` compiles (72 pages) but has **32 `\todo{}` markers** (counted 2026-11-21) (contribution per member, repo evidence, diagrams, Gantt,
+literature verification, licences, DBMS decision, AI-use disclosure wording). `grep -rno 'todo{' report/chapters | wc -l`.

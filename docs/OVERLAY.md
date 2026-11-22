@@ -7,7 +7,7 @@ arrows, evaluation, and a manual-correction prompt (spec s.20). Three problems, 
 |---|---|---|---|---|
 | 1 | Huzaifa | `overlay/1-geometry` | where is each square on the screen | **done** (this repo state) |
 | 2 | Hiyam | `overlay/2-state-logic` | what to show, and when | **done** (this repo state) |
-| 3 | Madiha | `overlay/3-arrows` | arrows and engine info | stubs in place |
+| 3 | Madiha | `overlay/3-arrows` | arrows and engine info | **done** (merged); not yet seen on a phone |
 
 ## Data flow
 ```
@@ -94,7 +94,7 @@ Tests: geometry for straight, knight, castling (all four), promotion, near/far s
    while a move settles; amber **Uncertain · checking** plus the **Not sure, suggestions paused** banner when the
    simulated hand covers the board. The small bar next to the text is reading quality (weaker of frame quality and
    visible fraction; a UI heuristic, not a probability).
-4. Arrows do not exist until Stage 3. `model.arrows` is already filled and gated; `Arrows.tsx` is still a stub.
+4. Arrows (Stage 3) are drawn by `Arrows.tsx` from `model.arrows`, only while `suggestionsAllowed` is true; the eval chip sits in `Status.tsx`.
 5. Automated: `npm test` (`model.test.ts` checks the gate over every state x turn x analysis combination;
    `Stage2.test.tsx` renders the real overlay and checks highlight pixel positions for White and Black).
 
